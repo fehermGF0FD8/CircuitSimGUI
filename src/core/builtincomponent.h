@@ -29,8 +29,8 @@ public:
                const QStyleOptionGraphicsItem*,
                QWidget*) override = 0;
 
-    // void addPin(Pin* pin)
-    // QList<Pin*> getPins() const {return pins;}
+    void addPin(Pin* pinParam);
+    QList<Pin*> getPins() const {return pins;}
 
     // void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
 
@@ -38,7 +38,7 @@ protected:
     QString id;
     QString type;
     // QMap<QString, QVariant> parameters;
-    // QList<Pin*> pins;
+    QList<Pin*> pins;
 
     // virtual void showParameterDialog();
 

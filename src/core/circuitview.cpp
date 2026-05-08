@@ -64,7 +64,7 @@ void CircuitView::drawBackground(QPainter* painter, const QRectF& rect) {
     pen.setCosmetic(true);
 
     painter->setPen(pen);
-    painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->setRenderHint(QPainter::Antialiasing);
 
     QVector<QPointF> points;
     for (int i = firstX; i <= lastX; ++i) {

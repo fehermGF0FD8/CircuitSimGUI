@@ -1,17 +1,20 @@
 #include "resistor.h"
 
+#include "pin.h"
+
 #include <QColor>
 #include <QFont>
 #include <QPainter>
 #include <QPen>
-#include <QPointF>
-#include <QtMath>
 
 Resistor::Resistor(const QString& idParam, const QString& typeParam, QGraphicsItem* parent):
-    BuiltInComponent(idParam, typeParam, parent) {}
+    BuiltInComponent(idParam, typeParam, parent) {
+    addPin(new Pin(QPointF(-20, 0), this));
+    addPin(new Pin(QPointF(20, 0), this));
+}
 
 QRectF Resistor::boundingRect() const {
-    return QRectF(-20, -15, 40, 30);
+    return QRectF(-23, -15, 46, 30);
 }
 
 void Resistor::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
@@ -21,7 +24,7 @@ void Resistor::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
     pen.setCosmetic(true);
 
     painter->setPen(pen);
-    painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->setRenderHint(QPainter::Antialiasing);
 
     if (isSelected()) {
         painter->setBrush(QColor(200, 220, 255));

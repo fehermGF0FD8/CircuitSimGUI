@@ -11,6 +11,7 @@ INCLUDEPATH += src/gui src/core
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    src/core/pin.cpp \
     src/gui/addcircuitdialog.cpp \
     src/core/builtincomponent.cpp \
     src/core/circuitview.cpp \
@@ -19,6 +20,7 @@ SOURCES += \
     src/core/resistor.cpp
 
 HEADERS += \
+    src/core/pin.h \
     src/gui/addcircuitdialog.h \
     src/core/builtincomponent.h \
     src/core/circuitview.h \

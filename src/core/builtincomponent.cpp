@@ -19,6 +19,12 @@ BuiltInComponent::BuiltInComponent(const QString& idParam, const QString& typePa
     setTransformOriginPoint(0, 0);
 }
 
+void BuiltInComponent::addPin(Pin* pinParam) {
+    if (pinParam) {
+        pins.append(pinParam);
+    }
+}
+
 QVariant BuiltInComponent::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionChange && scene()) {
         QPointF newPos = value.toPointF();
