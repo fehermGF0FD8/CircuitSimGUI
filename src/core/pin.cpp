@@ -17,6 +17,7 @@ Pin::Pin(QPointF relativePosParam, BuiltInComponent* parentCompParam):
 {
     setPos(relativePosParam);
     setAcceptHoverEvents(true);
+    setFlag(ItemIsSelectable);
 }
 
 QRectF Pin::boundingRect() const {

@@ -19,9 +19,8 @@ class CircuitView : public QGraphicsView
 
 public:
     explicit CircuitView(QWidget* parent = nullptr);
-    // Places a new resistor (specification: const. reg)
-    // component at the specified scene position
-    void addResistorAt(const QPointF& position);
+
+    void addComponentAt(const QString& componentType, const QPointF& position);
 
 protected:
     // Handles zooming in and out using the mouse wheel and Ctrl modifier
@@ -43,9 +42,7 @@ private:
     QPoint contextMenuPosition;
 
 private slots:
-    // Add a resistor from the context menu action
-    void addResistor();
-    // void addCapacitor();
+    void addComponent();
 
 signals:
     void mouseMoved(const QPointF& position);

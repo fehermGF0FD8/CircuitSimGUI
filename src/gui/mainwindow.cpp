@@ -79,15 +79,6 @@ void MainWindow::addCircuit() {
         ui->newProject->setEnabled(false);
         ui->newCircuitOrSubcircuit->setEnabled(false);
         connect(circuitView, &CircuitView::mouseMoved, this, &MainWindow::updateCursorInfo);
-
-        /* QGraphicsScene* circuitScene = circuitView->scene();
-        Resistor* r1 = new Resistor("R1", "R");
-        r1->setPos(0, 0);
-        circuitScene->addItem(r1);
-
-        Resistor* r2 = new Resistor("R2", "R");
-        r2->setPos(0, 0);
-        circuitScene->addItem(r2); */
     }
 }
 
@@ -145,5 +136,6 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
     QPoint centerOfView = currentCircuitView->viewport()->rect().center();
     QPointF scenePos = currentCircuitView->mapToScene(centerOfView);
 
-    if (item->text() == "Resistor") currentCircuitView->addResistorAt(scenePos);
+    QString componentType = item->text();
+    currentCircuitView->addComponentAt(componentType, scenePos);
 }

@@ -1,5 +1,6 @@
 #include "circuitview.h"
 
+#include "capacitor.h"
 #include "resistor.h"
 
 #include <QAction>
@@ -133,24 +134,47 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     QMenu* addMenu = contextMenu.addMenu("Add");
     QMenu* builtInComponentMenu = addMenu->addMenu("Built-in Component");
     QMenu* rMenu = builtInComponentMenu->addMenu("R");
-    // QMenu* cMenu = builtInComponentMenu->addMenu("C");
+    QMenu* cMenu = builtInComponentMenu->addMenu("C");
+    //...
 
     QAction* actionAddResistor = rMenu->addAction("Resistor");
-    // QAction* actionAddCapacitor = cMenu->addAction("Capacitor");
+    actionAddResistor->setData("Resistor");
+    QAction* actionAddCapacitor = cMenu->addAction("Capacitor");
+    actionAddCapacitor->setData("Capacitor");
+    //...
 
-    connect(actionAddResistor, &QAction::triggered, this, &CircuitView::addResistor);
+    connect(actionAddResistor, &QAction::triggered, this, &CircuitView::addComponent);
+    connect(actionAddCapacitor, &QAction::triggered, this, &CircuitView::addComponent);
+    //...
 
     contextMenu.exec(event->globalPos());
 }
 
-void CircuitView::addResistorAt(const QPointF& position) {
-    if (!scene()) return;
-    Resistor* resistor = new Resistor("R?", "R");
-    scene()->addItem(resistor);
-    resistor->setPos(position);
+void CircuitView::addComponent() {
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action) return;
+
+    QString componentType = action->data().toString();
+
+    QPointF scenePos = mapToScene(contextMenuPosition);
+    addComponentAt(componentType, scenePos);
 }
 
-void CircuitView::addResistor() {
-    QPointF scenePos = mapToScene(contextMenuPosition);
-    addResistorAt(scenePos);
+void CircuitView::addComponentAt(const QString& componentType, const QPointF& position) {
+    if (!scene()) return;
+
+    BuiltInComponent* newComponent = nullptr;
+
+    if (componentType == "Resistor") {
+        newComponent = new Resistor("R?", "R");
+    }
+    else if (componentType == "Capacitor") {
+        newComponent = new Capacitor("C?", "C");
+    }
+    //...
+
+    if (newComponent) {
+        scene()->addItem(newComponent);
+        newComponent->setPos(position);
+    }
 }
