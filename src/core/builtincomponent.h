@@ -1,6 +1,8 @@
 #ifndef BUILTINCOMPONENT_H
 #define BUILTINCOMPONENT_H
 
+#include "componenttype.h"
+
 #include <QGraphicsObject>
 #include <QList>
 #include <QMap>
@@ -20,7 +22,7 @@ class BuiltInComponent: public QGraphicsObject
 
 public:
     explicit BuiltInComponent(const QString& idParam,
-                              const QString& typeParam,
+                              ComponentType typeParam,
                               QGraphicsItem* parent = nullptr);
     virtual ~BuiltInComponent() = default;
 
@@ -29,6 +31,8 @@ public:
                const QStyleOptionGraphicsItem*,
                QWidget*) override = 0;
 
+    void setID(const QString& compIDParam) {id = compIDParam;}
+
     void addPin(Pin* pinParam);
     QList<Pin*> getPins() const {return pins;}
 
@@ -36,7 +40,7 @@ public:
 
 protected:
     QString id;
-    QString type;
+    ComponentType type;
     // QMap<QString, QVariant> parameters;
     QList<Pin*> pins;
 

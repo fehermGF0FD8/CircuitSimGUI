@@ -1,6 +1,7 @@
 #include "circuitview.h"
 
 #include "capacitor.h"
+#include "idmanager.h"
 #include "resistor.h"
 
 #include <QAction>
@@ -138,9 +139,9 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     //...
 
     QAction* actionAddResistor = rMenu->addAction("Resistor");
-    actionAddResistor->setData("Resistor");
+    actionAddResistor->setData(static_cast<int>(ComponentType::Resistor));
     QAction* actionAddCapacitor = cMenu->addAction("Capacitor");
-    actionAddCapacitor->setData("Capacitor");
+    actionAddCapacitor->setData(static_cast<int>(ComponentType::Capacitor));
     //...
 
     connect(actionAddResistor, &QAction::triggered, this, &CircuitView::addComponent);
@@ -154,26 +155,38 @@ void CircuitView::addComponent() {
     QAction* action = qobject_cast<QAction*>(sender());
     if (!action) return;
 
-    QString componentType = action->data().toString();
+    ComponentType type = static_cast<ComponentType>(action->data().toInt());
 
     QPointF scenePos = mapToScene(contextMenuPosition);
-    addComponentAt(componentType, scenePos);
+    addComponentAt(type, scenePos);
 }
 
-void CircuitView::addComponentAt(const QString& componentType, const QPointF& position) {
+void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     if (!scene()) return;
 
+    QString prefix;
     BuiltInComponent* newComponent = nullptr;
 
-    if (componentType == "Resistor") {
-        newComponent = new Resistor("R?", "R");
-    }
-    else if (componentType == "Capacitor") {
-        newComponent = new Capacitor("C?", "C");
-    }
+    switch (type) {
+    case ComponentType::Resistor:
+        prefix = "R";
+        newComponent = new Resistor("?");
+        break;
+    case ComponentType::Capacitor:
+        prefix = "C";
+        newComponent = new Capacitor("?");
+        break;
     //...
+    default:
+        break;
+    }
 
     if (newComponent) {
+        if (idManager) {
+            QString newCompID = idManager->getNextID(prefix);
+            newComponent->setID(newCompID);
+        }
+
         scene()->addItem(newComponent);
         newComponent->setPos(position);
     }

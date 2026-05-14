@@ -1,6 +1,6 @@
 #include "builtincomponent.h"
 
-// #include "pin.h"
+#include "pin.h"
 
 #include <QGraphicsItem>
 #include <QGraphicsScene>
@@ -10,7 +10,7 @@
 #include <QWidget>
 #include <QtMath>
 
-BuiltInComponent::BuiltInComponent(const QString& idParam, const QString& typeParam, QGraphicsItem* parent):
+BuiltInComponent::BuiltInComponent(const QString& idParam, ComponentType typeParam, QGraphicsItem* parent):
     QGraphicsObject(parent), id(idParam), type(typeParam)
 {
     setFlag(ItemIsSelectable);

@@ -1,5 +1,6 @@
 #include "capacitor.h"
 
+#include "componenttype.h"
 #include "pin.h"
 
 #include <QColor>
@@ -7,8 +8,8 @@
 #include <QPainter>
 #include <QPen>
 
-Capacitor::Capacitor(const QString& idParam, const QString& typeParam, QGraphicsItem* parent):
-    BuiltInComponent(idParam, typeParam, parent) {
+Capacitor::Capacitor(const QString& idParam, QGraphicsItem* parent):
+    BuiltInComponent(idParam, ComponentType::Capacitor, parent) {
     addPin(new Pin(QPointF(-40, 0), this));
     addPin(new Pin(QPointF(40, 0), this));
 }

@@ -1,5 +1,6 @@
 #include "resistor.h"
 
+#include "componenttype.h"
 #include "pin.h"
 
 #include <QColor>
@@ -7,8 +8,8 @@
 #include <QPainter>
 #include <QPen>
 
-Resistor::Resistor(const QString& idParam, const QString& typeParam, QGraphicsItem* parent):
-    BuiltInComponent(idParam, typeParam, parent) {
+Resistor::Resistor(const QString& idParam, QGraphicsItem* parent):
+    BuiltInComponent(idParam, ComponentType::Resistor, parent) {
     addPin(new Pin(QPointF(-40, 0), this));
     addPin(new Pin(QPointF(40, 0), this));
 }

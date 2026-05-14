@@ -18,8 +18,7 @@ class Capacitor: public BuiltInComponent
 
 public:
     explicit Capacitor(const QString& idParam,
-                      const QString& typeParam,
-                      QGraphicsItem* parent = nullptr);
+                       QGraphicsItem* parent = nullptr);
     ~Capacitor() override = default;
     QRectF boundingRect() const override;
     void paint(QPainter* painter,

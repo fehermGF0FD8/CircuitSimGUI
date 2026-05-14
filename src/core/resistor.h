@@ -18,7 +18,6 @@ class Resistor: public BuiltInComponent
 
 public:
     explicit Resistor(const QString& idParam,
-                      const QString& typeParam,
                       QGraphicsItem* parent = nullptr);
     ~Resistor() override = default;
     QRectF boundingRect() const override;

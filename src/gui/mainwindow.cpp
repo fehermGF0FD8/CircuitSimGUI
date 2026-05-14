@@ -3,7 +3,6 @@
 
 #include "addcircuitdialog.h"
 #include "circuitview.h"
-#include "resistor.h"
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
@@ -31,10 +30,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Safety lock 2: Ensure the workspace has exactly 0 tabs on startup
     ui->tabWidget->clear();
-
-    // Initialize the counters for unique tab naming
-    circuitCounter = 1;
-    subcircuitCounter = 1;
 
     setupConnections();
 }
@@ -73,6 +68,7 @@ void MainWindow::addCircuit() {
         }
 
         CircuitView* circuitView = new CircuitView(ui->tabWidget);
+        circuitView->setIDManager(&idManager);
         int newTabIndex = ui->tabWidget->addTab(circuitView, data.circuitName);
         ui->tabWidget->setCurrentIndex(newTabIndex);
 
@@ -136,6 +132,10 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
     QPoint centerOfView = currentCircuitView->viewport()->rect().center();
     QPointF scenePos = currentCircuitView->mapToScene(centerOfView);
 
-    QString componentType = item->text();
-    currentCircuitView->addComponentAt(componentType, scenePos);
+    ComponentType type;
+    if (item->text() == "Resistor") type = ComponentType::Resistor;
+    else if (item->text() == "Capacitor") type = ComponentType::Capacitor;
+    //...
+    else return;
+    currentCircuitView->addComponentAt(type, scenePos);
 }

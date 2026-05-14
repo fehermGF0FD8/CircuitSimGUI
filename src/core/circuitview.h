@@ -1,12 +1,15 @@
 #ifndef CIRCUITVIEW_H
 #define CIRCUITVIEW_H
 
+#include "componenttype.h"
+
 #include <QGraphicsView>
 
 #include <QPoint>
 #include <QPointF>
 #include <QRectF>
 
+class IDmanager;
 class QContextMenuEvent;
 class QKeyEvent;
 class QMouseEvent;
@@ -20,7 +23,8 @@ class CircuitView : public QGraphicsView
 public:
     explicit CircuitView(QWidget* parent = nullptr);
 
-    void addComponentAt(const QString& componentType, const QPointF& position);
+    void addComponentAt(ComponentType type, const QPointF& position);
+    void setIDManager(IDmanager* idManagerParam) {idManager = idManagerParam;}
 
 protected:
     // Handles zooming in and out using the mouse wheel and Ctrl modifier
@@ -40,6 +44,7 @@ protected:
 
 private:
     QPoint contextMenuPosition;
+    IDmanager* idManager = nullptr;
 
 private slots:
     void addComponent();
