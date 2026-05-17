@@ -3,8 +3,6 @@
 
 #include <QMainWindow>
 
-#include "idmanager.h"
-
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -24,7 +22,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    IDmanager idManager;
 
     // Initializes all signal-slot connections for the UI elements
     void setupConnections();

@@ -2,6 +2,7 @@
 #define CIRCUITVIEW_H
 
 #include "componenttype.h"
+#include "idmanager.h"
 
 #include <QGraphicsView>
 
@@ -24,7 +25,11 @@ public:
     explicit CircuitView(QWidget* parent = nullptr);
 
     void addComponentAt(ComponentType type, const QPointF& position);
-    void setIDManager(IDmanager* idManagerParam) {idManager = idManagerParam;}
+
+/*
+public slots:
+    void reassignIDs(); => TODO: available from Tools menu
+*/
 
 protected:
     // Handles zooming in and out using the mouse wheel and Ctrl modifier
@@ -44,10 +49,12 @@ protected:
 
 private:
     QPoint contextMenuPosition;
-    IDmanager* idManager = nullptr;
+    IDmanager idManager;
 
 private slots:
     void addComponent();
+    // only available via context menu
+    void reassignIDs();
 
 signals:
     void mouseMoved(const QPointF& position);

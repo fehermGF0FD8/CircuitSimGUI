@@ -68,7 +68,6 @@ void MainWindow::addCircuit() {
         }
 
         CircuitView* circuitView = new CircuitView(ui->tabWidget);
-        circuitView->setIDManager(&idManager);
         int newTabIndex = ui->tabWidget->addTab(circuitView, data.circuitName);
         ui->tabWidget->setCurrentIndex(newTabIndex);
 

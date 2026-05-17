@@ -1,7 +1,5 @@
 #include "circuitview.h"
 
-#include "idmanager.h"
-
 #include "resistor.h"
 #include "conductance.h"
 #include "capacitor.h"
@@ -13,10 +11,12 @@
 #include <QGraphicsItem>
 #include <QGraphicsScene>
 #include <QKeyEvent>
+#include <QList>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPen>
+#include <QStringList>
 #include <QVector>
 #include <QWheelEvent>
 #include <QtMath>
@@ -158,6 +158,12 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     connect(actionAddVoltageSource, &QAction::triggered, this, &CircuitView::addComponent);
     //...
 
+    contextMenu.addSeparator();
+
+    QAction* actionReassignIDs = contextMenu.addAction("Re-index Components");
+
+    connect(actionReassignIDs, &QAction::triggered, this, &CircuitView::reassignIDs);
+
     contextMenu.exec(event->globalPos());
 }
 
@@ -204,12 +210,66 @@ void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     }
 
     if (newComponent) {
-        if (idManager) {
-            QString newCompID = idManager->getNextID(prefix);
-            newComponent->setID(newCompID);
-        }
+        QString newCompID = idManager.getNextID(prefix);
+        newComponent->setID(newCompID);
 
         scene()->addItem(newComponent);
         newComponent->setPos(position);
+    }
+}
+
+bool compareComponents(BuiltInComponent* a, BuiltInComponent* b) {
+    QStringList partsA = a->getID().split("_");
+    QStringList partsB = b->getID().split("_");
+
+    int numA = 0;
+    int numB = 0;
+
+    if (partsA.size() > 1) {
+        numA = partsA[1].toInt();
+    }
+    if (partsB.size() > 1) {
+        numB = partsB[1].toInt();
+    }
+
+    return numA < numB;
+}
+
+void CircuitView::reassignIDs() {
+    // Safety check
+    if (!scene()) return;
+
+    // Reset the internal counters
+    idManager.reset();
+
+    // List all built-in components currently on the scene
+    QList<BuiltInComponent*> componentsToRename;
+    for (QGraphicsItem* item : scene()->items()) {
+        if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+            componentsToRename.append(comp);
+        }
+    }
+
+    // Sort the listed components in ascending order
+    std::sort(componentsToRename.begin(), componentsToRename.end(), compareComponents);
+
+    // Iterate through the sorted list and assign new IDs
+    for (BuiltInComponent* comp : componentsToRename) {
+        QString prefix;
+
+        switch (comp->getType()) {
+        case ComponentType::Resistor:      prefix = "R"; break;
+        case ComponentType::Conductance:   prefix = "G"; break;
+        case ComponentType::Capacitor:     prefix = "C"; break;
+        case ComponentType::CurrentSource: prefix = "I"; break;
+        case ComponentType::VoltageSource: prefix = "V"; break;
+        default:                           prefix = "U"; break;
+        }
+
+        QString newID = idManager.getNextID(prefix);
+        comp->setID(newID);
+
+        // repaint the component with its new text
+        comp->update();
     }
 }

@@ -32,6 +32,9 @@ public:
                QWidget*) override = 0;
 
     void setID(const QString& compIDParam) {id = compIDParam;}
+    QString getID() const {return id;}
+
+    ComponentType getType() const {return type;}
 
     void addPin(Pin* pinParam);
     QList<Pin*> getPins() const {return pins;}
