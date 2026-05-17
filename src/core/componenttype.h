@@ -3,8 +3,10 @@
 
 enum class ComponentType {
     Resistor,
+    Conductance,
     Capacitor,
-    Inductor
+    CurrentSource,
+    VoltageSource
     //...
 };
 

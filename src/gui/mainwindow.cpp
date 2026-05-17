@@ -134,7 +134,10 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
 
     ComponentType type;
     if (item->text() == "Resistor") type = ComponentType::Resistor;
+    else if (item->text() == "Conductance") type = ComponentType::Conductance;
     else if (item->text() == "Capacitor") type = ComponentType::Capacitor;
+    else if (item->text() == "Current Source") type = ComponentType::CurrentSource;
+    else if (item->text() == "Voltage Source") type = ComponentType::VoltageSource;
     //...
     else return;
     currentCircuitView->addComponentAt(type, scenePos);

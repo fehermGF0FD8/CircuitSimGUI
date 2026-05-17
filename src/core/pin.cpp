@@ -2,11 +2,11 @@
 
 #include "builtincomponent.h"
 
-#include <QColor>
+#include "componentpainter.h"
+
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
-#include <QPen>
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
 
@@ -21,28 +21,11 @@ Pin::Pin(QPointF relativePosParam, BuiltInComponent* parentCompParam):
 }
 
 QRectF Pin::boundingRect() const {
-    return QRect(-2, -2, 4, 4);
+    return ComponentPainter::PIN_BOUND_RECT;
 }
 
 void Pin::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
-    QPen pen(Qt::black);
-    pen.setWidth(2);
-    pen.setCosmetic(true);
-
-    painter->setPen(pen);
-    painter->setRenderHint(QPainter::Antialiasing);
-
-    if (isSelected()) {
-        painter->setBrush(QColor(200, 220, 255));
-    }
-    else if (isHovered) {
-        painter->setBrush(Qt::yellow);
-    }
-    else {
-        painter->setBrush(Qt::white);
-    }
-
-    painter->drawEllipse(boundingRect());
+    ComponentPainter::drawPin(painter, isSelected(), isHovered);
 }
 
 void Pin::hoverEnterEvent(QGraphicsSceneHoverEvent* event) {

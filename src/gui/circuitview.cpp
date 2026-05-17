@@ -1,8 +1,12 @@
 #include "circuitview.h"
 
-#include "capacitor.h"
 #include "idmanager.h"
+
 #include "resistor.h"
+#include "conductance.h"
+#include "capacitor.h"
+#include "currentsource.h"
+#include "voltagesource.h"
 
 #include <QAction>
 #include <QContextMenuEvent>
@@ -134,18 +138,24 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     QMenu contextMenu(this);
     QMenu* addMenu = contextMenu.addMenu("Add");
     QMenu* builtInComponentMenu = addMenu->addMenu("Built-in Component");
-    QMenu* rMenu = builtInComponentMenu->addMenu("R");
-    QMenu* cMenu = builtInComponentMenu->addMenu("C");
-    //...
 
-    QAction* actionAddResistor = rMenu->addAction("Resistor");
+    QAction* actionAddResistor = builtInComponentMenu->addAction("Resistor");
     actionAddResistor->setData(static_cast<int>(ComponentType::Resistor));
-    QAction* actionAddCapacitor = cMenu->addAction("Capacitor");
+    QAction* actionAddConductance = builtInComponentMenu->addAction("Conductance");
+    actionAddConductance->setData(static_cast<int>(ComponentType::Conductance));
+    QAction* actionAddCapacitor = builtInComponentMenu->addAction("Capacitor");
     actionAddCapacitor->setData(static_cast<int>(ComponentType::Capacitor));
+    QAction* actionAddCurrentSource = builtInComponentMenu->addAction("Current Source");
+    actionAddCurrentSource->setData(static_cast<int>(ComponentType::CurrentSource));
+    QAction* actionAddVoltageSource = builtInComponentMenu->addAction("Voltage Source");
+    actionAddVoltageSource->setData(static_cast<int>(ComponentType::VoltageSource));
     //...
 
     connect(actionAddResistor, &QAction::triggered, this, &CircuitView::addComponent);
+    connect(actionAddConductance, &QAction::triggered, this, &CircuitView::addComponent);
     connect(actionAddCapacitor, &QAction::triggered, this, &CircuitView::addComponent);
+    connect(actionAddCurrentSource, &QAction::triggered, this, &CircuitView::addComponent);
+    connect(actionAddVoltageSource, &QAction::triggered, this, &CircuitView::addComponent);
     //...
 
     contextMenu.exec(event->globalPos());
@@ -172,9 +182,21 @@ void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
         prefix = "R";
         newComponent = new Resistor("?");
         break;
+    case ComponentType::Conductance:
+        prefix = "G";
+        newComponent = new Conductance("?");
+        break;
     case ComponentType::Capacitor:
         prefix = "C";
         newComponent = new Capacitor("?");
+        break;
+    case ComponentType::CurrentSource:
+        prefix = "I";
+        newComponent = new CurrentSource("?");
+        break;
+    case ComponentType::VoltageSource:
+        prefix = "V";
+        newComponent = new VoltageSource("?");
         break;
     //...
     default:

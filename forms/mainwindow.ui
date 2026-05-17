@@ -171,12 +171,27 @@
        </property>
        <item>
         <property name="text">
+         <string>Resistor</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Conductance</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Capacitor</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Resistor</string>
+         <string>Current Source</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Voltage Source</string>
         </property>
        </item>
       </widget>
