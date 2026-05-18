@@ -1,5 +1,5 @@
-#ifndef RESISTOR_H
-#define RESISTOR_H
+#ifndef CONDUCTANCE_H
+#define CONDUCTANCE_H
 
 #include "builtincomponent.h"
 
@@ -12,18 +12,18 @@ class QPainter;
 class QStyleOptionGraphicsItem;
 class QWidget;
 
-class Resistor: public BuiltInComponent
+class Conductance: public BuiltInComponent
 {
     Q_OBJECT
 
 public:
-    explicit Resistor(const QString& idParam,
-                      QGraphicsItem* parent = nullptr);
-    ~Resistor() override = default;
+    explicit Conductance(const QString& idParam,
+                         QGraphicsItem* parent = nullptr);
+    ~Conductance() override = default;
     QRectF boundingRect() const override;
     void paint(QPainter* painter,
                const QStyleOptionGraphicsItem*,
                QWidget*) override;
 };
 
-#endif // RESISTOR_H
+#endif // CONDUCTANCE_H

@@ -9,7 +9,9 @@ class IDmanager
 public:
     explicit IDmanager() = default;
     QString getNextID(const QString& prefix);
-    void reset() {idCounters.clear();}
+    void resetPrefix(const QString& prefix);
+    void resetAllComponents();
+    void resetAllInternalNodes();
 
 private:
     QMap<QString, int> idCounters;

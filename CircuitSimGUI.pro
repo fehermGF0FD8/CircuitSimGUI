@@ -17,6 +17,7 @@ SOURCES += \
     src/core/entities/voltagesource.cpp \
     src/core/idmanager.cpp \
     src/core/entities/capacitor.cpp \
+    src/core/node.cpp \
     src/core/pin.cpp \
     src/gui/addcircuitdialog.cpp \
     src/core/builtincomponent.cpp \
@@ -33,6 +34,8 @@ HEADERS += \
     src/core/entities/voltagesource.h \
     src/core/idmanager.h \
     src/core/entities/capacitor.h \
+    src/core/node.h \
+    src/core/nodetype.h \
     src/core/pin.h \
     src/gui/addcircuitdialog.h \
     src/core/builtincomponent.h \

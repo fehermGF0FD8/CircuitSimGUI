@@ -2,6 +2,7 @@
 #define CIRCUITVIEW_H
 
 #include "componenttype.h"
+#include "nodetype.h"
 #include "idmanager.h"
 
 #include <QGraphicsView>
@@ -25,6 +26,7 @@ public:
     explicit CircuitView(QWidget* parent = nullptr);
 
     void addComponentAt(ComponentType type, const QPointF& position);
+    void addNodeAt(NodeType type, const QPointF& position);
 
 /*
 public slots:
@@ -53,6 +55,7 @@ private:
 
 private slots:
     void addComponent();
+    void addNode();
     // only available via context menu
     void reassignIDs();
 

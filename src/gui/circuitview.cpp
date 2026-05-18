@@ -6,6 +6,8 @@
 #include "currentsource.h"
 #include "voltagesource.h"
 
+#include "node.h"
+
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QGraphicsItem>
@@ -20,6 +22,48 @@
 #include <QVector>
 #include <QWheelEvent>
 #include <QtMath>
+
+template <typename T>
+QList<T*> filterByPrefix(const QList<T*>& allItems, const QString& prefix) {
+    QList<T*> filteredList;
+
+    for (T* item : allItems) {
+        if (item->getID().startsWith(prefix + "_")) {
+            filteredList.append(item);
+        }
+    }
+    return filteredList;
+}
+
+template <typename T>
+bool compareByID(T* a, T* b) {
+    QStringList partsA = a->getID().split("_");
+    QStringList partsB = b->getID().split("_");
+
+    int numA = 0;
+    int numB = 0;
+
+    if (partsA.size() > 1) {
+        numA = partsA[1].toInt();
+    }
+    if (partsB.size() > 1) {
+        numB = partsB[1].toInt();
+    }
+
+    return numA < numB;
+}
+
+template <typename T>
+void reassignListIDs(QList<T*>& items, const QString& prefix, IDmanager& idManager) {
+    std::sort(items.begin(), items.end(), compareByID<T>);
+
+    idManager.resetPrefix(prefix);
+
+    for (T* item : items) {
+        QString newID = idManager.getNextID(prefix);
+        item->setID(newID);
+    }
+}
 
 CircuitView::CircuitView(QWidget* parent): QGraphicsView(parent) {
     QGraphicsScene* tempScene = new QGraphicsScene(this);
@@ -138,6 +182,7 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     QMenu contextMenu(this);
     QMenu* addMenu = contextMenu.addMenu("Add");
     QMenu* builtInComponentMenu = addMenu->addMenu("Built-in Component");
+    QMenu* nodeMenu = addMenu->addMenu("Node");
 
     QAction* actionAddResistor = builtInComponentMenu->addAction("Resistor");
     actionAddResistor->setData(static_cast<int>(ComponentType::Resistor));
@@ -151,6 +196,12 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     actionAddVoltageSource->setData(static_cast<int>(ComponentType::VoltageSource));
     //...
 
+    QAction* actionAddNTypeNode = nodeMenu->addAction("N-type Node");
+    actionAddNTypeNode->setData(static_cast<int>(NodeType::N));
+    QAction* actionAddBTypeNode = nodeMenu->addAction("B-type Node");
+    actionAddBTypeNode->setData(static_cast<int>(NodeType::B));
+    //...
+
     connect(actionAddResistor, &QAction::triggered, this, &CircuitView::addComponent);
     connect(actionAddConductance, &QAction::triggered, this, &CircuitView::addComponent);
     connect(actionAddCapacitor, &QAction::triggered, this, &CircuitView::addComponent);
@@ -158,9 +209,13 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     connect(actionAddVoltageSource, &QAction::triggered, this, &CircuitView::addComponent);
     //...
 
+    connect(actionAddNTypeNode, &QAction::triggered, this, &CircuitView::addNode);
+    connect(actionAddBTypeNode, &QAction::triggered, this, &CircuitView::addNode);
+    //...
+
     contextMenu.addSeparator();
 
-    QAction* actionReassignIDs = contextMenu.addAction("Re-index Components");
+    QAction* actionReassignIDs = contextMenu.addAction("Reassign IDs");
 
     connect(actionReassignIDs, &QAction::triggered, this, &CircuitView::reassignIDs);
 
@@ -175,6 +230,16 @@ void CircuitView::addComponent() {
 
     QPointF scenePos = mapToScene(contextMenuPosition);
     addComponentAt(type, scenePos);
+}
+
+void CircuitView::addNode() {
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action) return;
+
+    NodeType type = static_cast<NodeType>(action->data().toInt());
+
+    QPointF scenePos = mapToScene(contextMenuPosition);
+    addNodeAt(type, scenePos);
 }
 
 void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
@@ -218,29 +283,74 @@ void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     }
 }
 
-bool compareComponents(BuiltInComponent* a, BuiltInComponent* b) {
-    QStringList partsA = a->getID().split("_");
-    QStringList partsB = b->getID().split("_");
+void CircuitView::addNodeAt(NodeType type, const QPointF& position) {
+    if (!scene()) return;
 
-    int numA = 0;
-    int numB = 0;
+    QString prefix;
+    Node* newNode = nullptr;
 
-    if (partsA.size() > 1) {
-        numA = partsA[1].toInt();
+    switch (type) {
+    case NodeType::N:
+        prefix = "N";
+        break;
+    case NodeType::B:
+        prefix = "B";
+        break;
+    //...
+    default: break;
     }
-    if (partsB.size() > 1) {
-        numB = partsB[1].toInt();
-    }
 
-    return numA < numB;
+    QString newNodeID = idManager.getNextID(prefix);
+    newNode = new Node(newNodeID, type);
+
+    scene()->addItem(newNode);
+    newNode->setPos(position);
 }
 
 void CircuitView::reassignIDs() {
+    if (!scene()) return;
+
+    QList<BuiltInComponent*> allComps;
+    for (QGraphicsItem* item : scene()->items()) {
+        if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+            allComps.append(comp);
+        }
+    }
+
+    QList<Node*> allNodes;
+    for (QGraphicsItem* item : scene()->items()) {
+        if (Node* node = dynamic_cast<Node*>(item)) {
+            allNodes.append(node);
+        }
+    }
+
+    QList<BuiltInComponent*> resistors = filterByPrefix(allComps, "R");
+    QList<BuiltInComponent*> conductances = filterByPrefix(allComps, "G");
+    QList<BuiltInComponent*> capacitors = filterByPrefix(allComps, "C");
+    QList<BuiltInComponent*> currentSources = filterByPrefix(allComps, "I");
+    QList<BuiltInComponent*> voltageSources = filterByPrefix(allComps, "V");
+
+    QList<Node*> nNodes = filterByPrefix(allNodes, "N");
+    QList<Node*> bNodes = filterByPrefix(allNodes, "B");
+
+    reassignListIDs(resistors, "R", idManager);
+    reassignListIDs(conductances, "G", idManager);
+    reassignListIDs(capacitors, "C", idManager);
+    reassignListIDs(currentSources, "I", idManager);
+    reassignListIDs(voltageSources, "V", idManager);
+
+    reassignListIDs(nNodes, "N", idManager);
+    reassignListIDs(bNodes, "B", idManager);
+
+    scene()->update();
+}
+
+/* void CircuitView::reassignCompIDs() {
     // Safety check
     if (!scene()) return;
 
     // Reset the internal counters
-    idManager.reset();
+    idManager.resetAllComponents();
 
     // List all built-in components currently on the scene
     QList<BuiltInComponent*> componentsToRename;
@@ -258,12 +368,23 @@ void CircuitView::reassignIDs() {
         QString prefix;
 
         switch (comp->getType()) {
-        case ComponentType::Resistor:      prefix = "R"; break;
-        case ComponentType::Conductance:   prefix = "G"; break;
-        case ComponentType::Capacitor:     prefix = "C"; break;
-        case ComponentType::CurrentSource: prefix = "I"; break;
-        case ComponentType::VoltageSource: prefix = "V"; break;
-        default:                           prefix = "U"; break;
+        case ComponentType::Resistor:
+            prefix = "R";
+            break;
+        case ComponentType::Conductance:
+            prefix = "G";
+            break;
+        case ComponentType::Capacitor:
+            prefix = "C";
+            break;
+        case ComponentType::CurrentSource:
+            prefix = "I";
+            break;
+        case ComponentType::VoltageSource:
+            prefix = "V";
+            break;
+        default:
+            break;
         }
 
         QString newID = idManager.getNextID(prefix);
@@ -272,4 +393,4 @@ void CircuitView::reassignIDs() {
         // repaint the component with its new text
         comp->update();
     }
-}
+} */

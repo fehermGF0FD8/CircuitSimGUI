@@ -140,12 +140,13 @@ void ComponentPainter::drawVoltageSource(QPainter* painter, bool isSelected, con
 }
 
 void ComponentPainter::drawPin(QPainter* painter, bool isSelected, bool isHovered) {
+    painter->setRenderHint(QPainter::Antialiasing);
+
     QPen pen(Qt::black);
     pen.setWidth(2);
     pen.setCosmetic(true);
 
     painter->setPen(pen);
-    painter->setRenderHint(QPainter::Antialiasing);
 
     if (isSelected) {
         painter->setBrush(QColor(200, 220, 255));
@@ -158,4 +159,34 @@ void ComponentPainter::drawPin(QPainter* painter, bool isSelected, bool isHovere
     }
 
     painter->drawEllipse(ComponentPainter::PIN_BOUND_RECT);
+}
+
+void ComponentPainter::drawNode(QPainter* painter, NodeType type, bool isSelected, bool isHovered) {
+    painter->setRenderHint(QPainter::Antialiasing);
+
+    QColor nodeColor;
+    switch(type) {
+        case NodeType::N:
+            nodeColor = Qt::red;
+            break;
+        case NodeType::B:
+            nodeColor = Qt::blue;
+            break;
+        //...
+        default:
+            nodeColor = Qt::black;
+            break;
+    }
+
+    if (isSelected) {
+        nodeColor = QColor(200, 220, 255);
+    }
+    else if (isHovered) {
+        nodeColor = nodeColor.lighter(150);
+    }
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QBrush(nodeColor));
+
+    painter->drawEllipse(ComponentPainter::NODE_BOUND_RECT);
 }

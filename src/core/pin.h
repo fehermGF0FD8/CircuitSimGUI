@@ -6,6 +6,7 @@
 #include <QRectF>
 
 class BuiltInComponent;
+//class Node
 class QGraphicsSceneHoverEvent;
 class QGraphicsSceneMouseEvent;
 class QPainter;
@@ -21,14 +22,27 @@ public:
     explicit Pin(QPointF relativePosParam,
                  BuiltInComponent* parentCompParam);
     ~Pin() = default;
+
     QRectF boundingRect() const override;
     void paint(QPainter* painter,
                const QStyleOptionGraphicsItem*,
                QWidget*) override;
-    // void connectWire(Wire* wireParam);
+
+    /*
+    void setNode(Node* nodeParam) {connectedNode = nodeParam;}
+    void removeNode() {connectedNode = nullptr;}
+    Node* getNode() const {return connectedNode;}
+    */
+
+    /*
+    void setWire(Wire* wireParam) {connectedWire = wireParam;}
+    void removeWire() {connectedWire = nullptr;}
+    Wire* getWire() const {return connectedWire;}
+    */
 
 private:
     BuiltInComponent* parentComp;
+    // Node* connectedNode = nullptr;
     // Wire* connectedWire = nullptr;
     bool isHovered;
 

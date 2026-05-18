@@ -1,5 +1,5 @@
-#ifndef CAPACITOR_H
-#define CAPACITOR_H
+#ifndef CURRENTSOURCE_H
+#define CURRENTSOURCE_H
 
 #include "builtincomponent.h"
 
@@ -12,18 +12,18 @@ class QPainter;
 class QStyleOptionGraphicsItem;
 class QWidget;
 
-class Capacitor: public BuiltInComponent
+class CurrentSource: public BuiltInComponent
 {
     Q_OBJECT
 
 public:
-    explicit Capacitor(const QString& idParam,
-                       QGraphicsItem* parent = nullptr);
-    ~Capacitor() override = default;
+    explicit CurrentSource(const QString& idParam,
+                           QGraphicsItem* parent = nullptr);
+    ~CurrentSource() override = default;
     QRectF boundingRect() const override;
     void paint(QPainter* painter,
                const QStyleOptionGraphicsItem*,
                QWidget*) override;
 };
 
-#endif // CAPACITOR_H
+#endif // CURRENTSOURCE_H

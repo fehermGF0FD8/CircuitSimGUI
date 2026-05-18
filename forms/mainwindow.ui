@@ -147,21 +147,36 @@
    <addaction name="newController"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::NoDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
-    <string>Add Component</string>
+    <string>Add</string>
+   </property>
+   <property name="dockLocation">
+    <enum>Qt::DockWidgetArea::LeftDockWidgetArea</enum>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <layout class="QVBoxLayout" name="verticalLayout_4">
      <item>
       <widget class="QListWidget" name="listWidget">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -169,6 +184,22 @@
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
        </property>
+       <item>
+        <property name="text">
+         <string>--- Component ---</string>
+        </property>
+        <property name="font">
+         <font>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="textAlignment">
+         <set>AlignCenter</set>
+        </property>
+        <property name="flags">
+         <set>NoItemFlags</set>
+        </property>
+       </item>
        <item>
         <property name="text">
          <string>Resistor</string>
@@ -192,6 +223,32 @@
        <item>
         <property name="text">
          <string>Voltage Source</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>--- Node ---</string>
+        </property>
+        <property name="font">
+         <font>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="textAlignment">
+         <set>AlignCenter</set>
+        </property>
+        <property name="flags">
+         <set>NoItemFlags</set>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>N-type Node</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>B-type Node</string>
         </property>
        </item>
       </widget>

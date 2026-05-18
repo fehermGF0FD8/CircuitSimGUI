@@ -131,6 +131,20 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
     QPoint centerOfView = currentCircuitView->viewport()->rect().center();
     QPointF scenePos = currentCircuitView->mapToScene(centerOfView);
 
+    QString text = item->text();
+
+    if (text == "N-type Node") {
+        currentCircuitView->addNodeAt(NodeType::N, scenePos);
+        return;
+    }
+    else if (text == "B-type Node") {
+        currentCircuitView->addNodeAt(NodeType::B, scenePos);
+        return;
+    }
+    else if (text == "--- Nodes ---") {
+        return;
+    }
+
     ComponentType type;
     if (item->text() == "Resistor") type = ComponentType::Resistor;
     else if (item->text() == "Conductance") type = ComponentType::Conductance;

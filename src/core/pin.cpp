@@ -37,7 +37,7 @@ void Pin::hoverEnterEvent(QGraphicsSceneHoverEvent* event) {
 void Pin::hoverLeaveEvent(QGraphicsSceneHoverEvent* event) {
     isHovered = false;
     update();
-    QGraphicsObject::hoverEnterEvent(event);
+    QGraphicsObject::hoverLeaveEvent(event);
 }
 
 void Pin::mousePressEvent(QGraphicsSceneMouseEvent* event) {

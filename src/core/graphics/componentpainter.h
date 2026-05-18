@@ -1,6 +1,8 @@
 #ifndef COMPONENTPAINTER_H
 #define COMPONENTPAINTER_H
 
+#include "../nodetype.h"
+
 #include <QRectF>
 #include <QString>
 
@@ -16,8 +18,11 @@ namespace ComponentPainter {
     const QRectF VOLTAGESOURCE_BOUND_RECT = QRectF(-42, -45, 84, 60);
     void drawVoltageSource(QPainter* painter, bool isSelected, const QString& id);
 
-    const QRectF PIN_BOUND_RECT = QRect(-2, -2, 4, 4);
+    const QRectF PIN_BOUND_RECT = QRectF(-2, -2, 4, 4);
     void drawPin(QPainter* painter, bool isSelected, bool isHovered);
+
+    const QRectF NODE_BOUND_RECT = QRectF(-3, -3, 6, 6);
+    void drawNode(QPainter* painter, NodeType type, bool isSelected, bool isHovered);
 
 }
 
