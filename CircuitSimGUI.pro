@@ -19,6 +19,7 @@ SOURCES += \
     src/core/entities/capacitor.cpp \
     src/core/node.cpp \
     src/core/pin.cpp \
+    src/core/wire.cpp \
     src/gui/addcircuitdialog.cpp \
     src/core/builtincomponent.cpp \
     src/gui/circuitview.cpp \
@@ -37,6 +38,7 @@ HEADERS += \
     src/core/node.h \
     src/core/nodetype.h \
     src/core/pin.h \
+    src/core/wire.h \
     src/gui/addcircuitdialog.h \
     src/core/builtincomponent.h \
     src/gui/circuitview.h \

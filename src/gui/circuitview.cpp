@@ -7,6 +7,7 @@
 #include "voltagesource.h"
 
 #include "node.h"
+#include "pin.h"
 
 #include <QAction>
 #include <QContextMenuEvent>
@@ -168,6 +169,9 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
     }
     else if (event->key() == Qt::Key_Delete) {
         for (QGraphicsItem* item : this->scene()->selectedItems()) {
+            if (dynamic_cast<Pin*>(item) != nullptr) {
+                continue;
+            }
             delete item;
         }
     }

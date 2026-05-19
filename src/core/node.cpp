@@ -11,8 +11,12 @@
 #include <QWidget>
 
 Node::Node(const QString& idParam, NodeType typeParam, QGraphicsItem* parent):
-    QGraphicsObject(parent), id(idParam), type(typeParam)
+    QGraphicsObject(parent),
+    id(idParam),
+    type(typeParam),
+    isHovered(false)
 {
+    setAcceptHoverEvents(true);
     setFlag(ItemIsSelectable);
     setFlag(ItemIsMovable);
     setFlag(ItemSendsGeometryChanges);
@@ -23,7 +27,7 @@ QRectF Node::boundingRect() const {
 }
 
 void Node::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
-    ComponentPainter::drawNode(painter, getType(), isSelected(), isHovered);
+    ComponentPainter::drawNode(painter, getType(), isSelected(), isHovered, getID());
 }
 
 QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value) {

@@ -3,8 +3,12 @@
 
 #include "../nodetype.h"
 
+#include <QColor>
+#include <QPointF>
 #include <QRectF>
 #include <QString>
+
+class Wire;
 
 class QPainter;
 
@@ -17,13 +21,18 @@ namespace ComponentPainter {
     void drawCurrentSource(QPainter* painter, bool isSelected, const QString& id);
     const QRectF VOLTAGESOURCE_BOUND_RECT = QRectF(-42, -45, 84, 60);
     void drawVoltageSource(QPainter* painter, bool isSelected, const QString& id);
+    //...
 
     const QRectF PIN_BOUND_RECT = QRectF(-2, -2, 4, 4);
     void drawPin(QPainter* painter, bool isSelected, bool isHovered);
 
-    const QRectF NODE_BOUND_RECT = QRectF(-3, -3, 6, 6);
-    void drawNode(QPainter* painter, NodeType type, bool isSelected, bool isHovered);
+    const QRectF NODE_BOUND_RECT = QRectF(-5, -15, 40, 20);
+    void drawNode(QPainter* painter, NodeType type, bool isSelected,
+                  bool isHovered, const QString& id);
 
+    QRectF calculateWireBoundingRect(const Wire* wire);
+    void drawWire(QPainter* painter, const QPointF& start, const QPointF& end,
+                  const QColor& baseColor, bool isSelected, bool isHovered);
 }
 
 #endif // COMPONENTPAINTER_H

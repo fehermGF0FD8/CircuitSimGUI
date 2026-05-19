@@ -11,7 +11,9 @@
 #include <QtMath>
 
 BuiltInComponent::BuiltInComponent(const QString& idParam, ComponentType typeParam, QGraphicsItem* parent):
-    QGraphicsObject(parent), id(idParam), type(typeParam)
+    QGraphicsObject(parent),
+    id(idParam),
+    type(typeParam)
 {
     setFlag(ItemIsSelectable);
     setFlag(ItemIsMovable);

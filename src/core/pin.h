@@ -6,7 +6,7 @@
 #include <QRectF>
 
 class BuiltInComponent;
-//class Node
+class Node;
 class QGraphicsSceneHoverEvent;
 class QGraphicsSceneMouseEvent;
 class QPainter;
@@ -42,7 +42,7 @@ public:
 
 private:
     BuiltInComponent* parentComp;
-    // Node* connectedNode = nullptr;
+    Node* connectedNode = nullptr;
     // Wire* connectedWire = nullptr;
     bool isHovered;
 

@@ -1,5 +1,7 @@
 #include "componentpainter.h"
 
+#include "wire.h"
+
 #include <QColor>
 #include <QFont>
 #include <QPainter>
@@ -144,6 +146,7 @@ void ComponentPainter::drawPin(QPainter* painter, bool isSelected, bool isHovere
 
     QPen pen(Qt::black);
     pen.setWidth(2);
+    pen.setCapStyle(Qt::RoundCap);
     pen.setCosmetic(true);
 
     painter->setPen(pen);
@@ -161,7 +164,8 @@ void ComponentPainter::drawPin(QPainter* painter, bool isSelected, bool isHovere
     painter->drawEllipse(ComponentPainter::PIN_BOUND_RECT);
 }
 
-void ComponentPainter::drawNode(QPainter* painter, NodeType type, bool isSelected, bool isHovered) {
+void ComponentPainter::drawNode(QPainter* painter, NodeType type, bool isSelected,
+                                bool isHovered, const QString& id) {
     painter->setRenderHint(QPainter::Antialiasing);
 
     QColor nodeColor;
@@ -188,5 +192,46 @@ void ComponentPainter::drawNode(QPainter* painter, NodeType type, bool isSelecte
     painter->setPen(Qt::NoPen);
     painter->setBrush(QBrush(nodeColor));
 
-    painter->drawEllipse(ComponentPainter::NODE_BOUND_RECT);
+    painter->drawEllipse(QRectF(-3, -3, 6, 6));
+
+    QFont font;
+    font.setPointSize(10);
+
+    painter->setFont(font);
+    painter->setPen(nodeColor);
+
+    painter->drawText(QPointF(5, -5), id);
 }
+
+QRectF ComponentPainter::calculateWireBoundingRect(const Wire* wire) {
+    if (!wire) return QRectF();
+    // normalized(): normalized rect based on start and end points
+    // adjusted(...): non-zero area even for perfectly horizontal or vertical wires
+    return QRectF(wire->getStartPos(), wire->getEndPos()).normalized().adjusted(-4, -4, 4, 4);
+}
+
+void ComponentPainter::drawWire(QPainter* painter, const QPointF& start, const QPointF& end,
+                                const QColor& baseColor, bool isSelected, bool isHovered) {
+    painter->setRenderHint(QPainter::Antialiasing);
+
+    QColor wireColor = baseColor;
+    int wireThickness = 2;
+
+    if (isSelected) {
+        wireColor = QColor(200, 220, 255);
+        wireThickness = 3;
+    }
+    else if (isHovered) {
+        wireColor = wireColor.lighter(150);
+        wireThickness = 3;
+    }
+
+    QPen pen(wireColor);
+    pen.setWidth(wireThickness);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setCosmetic(true);
+
+    painter->setPen(pen);
+    painter->drawLine(start, end);
+}
+
