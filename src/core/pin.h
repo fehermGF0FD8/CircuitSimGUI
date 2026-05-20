@@ -12,7 +12,7 @@ class QGraphicsSceneMouseEvent;
 class QPainter;
 class QStyleOptionGraphicsItem;
 class QWidget;
-// class Wire
+class Wire;
 
 class Pin: public QGraphicsObject
 {
@@ -21,38 +21,30 @@ class Pin: public QGraphicsObject
 public:
     explicit Pin(QPointF relativePosParam,
                  BuiltInComponent* parentCompParam);
-    ~Pin() = default;
+    virtual ~Pin();
 
     QRectF boundingRect() const override;
     void paint(QPainter* painter,
                const QStyleOptionGraphicsItem*,
                QWidget*) override;
 
-    /*
-    void setNode(Node* nodeParam) {connectedNode = nodeParam;}
-    void removeNode() {connectedNode = nullptr;}
-    Node* getNode() const {return connectedNode;}
-    */
-
-    /*
     void setWire(Wire* wireParam) {connectedWire = wireParam;}
     void removeWire() {connectedWire = nullptr;}
     Wire* getWire() const {return connectedWire;}
-    */
+
+    bool isConnected() const {
+        return connectedWire != nullptr;
+    }
+
 
 private:
     BuiltInComponent* parentComp;
-    Node* connectedNode = nullptr;
-    // Wire* connectedWire = nullptr;
+    Wire* connectedWire = nullptr;
     bool isHovered;
 
 protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
-
-signals:
-    void pinClicked(Pin* pinParam);
 };
 
 #endif // PIN_H

@@ -2,13 +2,15 @@
 
 #include "componentpainter.h"
 #include "pin.h"
-// #include "wire.h"
+#include "snapping.h"
+#include "wire.h"
 
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
+#include <utility>
 
 Node::Node(const QString& idParam, NodeType typeParam, QGraphicsItem* parent):
     QGraphicsObject(parent),
@@ -22,6 +24,13 @@ Node::Node(const QString& idParam, NodeType typeParam, QGraphicsItem* parent):
     setFlag(ItemSendsGeometryChanges);
 }
 
+Node::~Node() {
+    while(!connectedWires.isEmpty()) {
+        Wire* wireToDelete = connectedWires.takeFirst();
+        delete wireToDelete;
+    }
+}
+
 QRectF Node::boundingRect() const {
     return ComponentPainter::NODE_BOUND_RECT;
 }
@@ -32,13 +41,13 @@ void Node::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
 
 QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionChange && scene()) {
-        QPointF newPos = value.toPointF();
-        int gridSize = 20;
-
-        qreal snappedX = qRound(newPos.x() / gridSize) * gridSize;
-        qreal snappedY = qRound(newPos.y() / gridSize) * gridSize;
-
-        return QPointF(snappedX, snappedY);
+        return Snapping::snapToGrid(value.toPointF());
+    }
+    if (change == ItemPositionHasChanged) {
+        // A std::as_const megakadályozza a felesleges memóriamásolást!
+        for (Wire* wire : std::as_const(connectedWires)) {
+            wire->updatePosition();
+        }
     }
     return QGraphicsObject::itemChange(change, value);
 }
@@ -53,9 +62,4 @@ void Node::hoverLeaveEvent(QGraphicsSceneHoverEvent* event) {
     isHovered = false;
     update();
     QGraphicsObject::hoverLeaveEvent(event);
-}
-
-void Node::mousePressEvent(QGraphicsSceneMouseEvent* event) {
-    emit nodeClicked(this);
-    event->accept();
 }

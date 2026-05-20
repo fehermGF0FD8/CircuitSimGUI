@@ -3,6 +3,8 @@
 #include "builtincomponent.h"
 
 #include "componentpainter.h"
+#include "node.h"
+#include "wire.h"
 
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsSceneMouseEvent>
@@ -18,6 +20,14 @@ Pin::Pin(QPointF relativePosParam, BuiltInComponent* parentCompParam):
     setPos(relativePosParam);
     setAcceptHoverEvents(true);
     setFlag(ItemIsSelectable);
+}
+
+Pin::~Pin() {
+    if (connectedWire != nullptr) {
+        Wire* wireToDelete = connectedWire;
+        connectedWire = nullptr;
+        delete wireToDelete;
+    }
 }
 
 QRectF Pin::boundingRect() const {
@@ -38,9 +48,4 @@ void Pin::hoverLeaveEvent(QGraphicsSceneHoverEvent* event) {
     isHovered = false;
     update();
     QGraphicsObject::hoverLeaveEvent(event);
-}
-
-void Pin::mousePressEvent(QGraphicsSceneMouseEvent* event) {
-    emit pinClicked(this);
-    event->accept();
 }

@@ -3,6 +3,7 @@
 
 #include "addcircuitdialog.h"
 #include "circuitview.h"
+#include "snapping.h"
 
 #include <QActionGroup>
 #include <QGraphicsView>
@@ -113,15 +114,13 @@ void MainWindow::closeTab(int index) {
 }
 
 void MainWindow::updateCursorInfo(const QPointF& position) {
-    const int gridSize = 20;
-    int snappedX = qRound(position.x() / gridSize) * gridSize;
-    int snappedY = qRound(position.y() / gridSize) * gridSize;
+    QPointF snappedPos = Snapping::snapToGrid(position);
 
     QString text = QString("X: %1, Y: %2 | Snapped: [%3, %4]")
                     .arg(static_cast<int>(position.x()))
                     .arg(static_cast<int>(position.y()))
-                    .arg(snappedX)
-                    .arg(snappedY);
+                    .arg(static_cast<int>(snappedPos.x()))
+                    .arg(static_cast<int>(snappedPos.y()));
 
     statusBar()->showMessage(text);
 }

@@ -7,7 +7,9 @@
 #include "voltagesource.h"
 
 #include "node.h"
+#include "nodetype.h"
 #include "pin.h"
+#include "snapping.h"
 #include "wire.h"
 
 #include <QAction>
@@ -141,17 +143,28 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
         QGraphicsView::mousePressEvent(&panningEvent);
     }
     else if ((event->button() == Qt::LeftButton) && (currentMode == WireMode)) {
-        QGraphicsItem* itemUnderCursor = itemAt(event->pos());
+        Node* clickedNode = nullptr;
+        Pin* clickedPin = nullptr;
 
-        if (!itemUnderCursor) {
-            QGraphicsView::mousePressEvent(event);
-            return;
+        const QList<QGraphicsItem*> itemsUnderCursor = items(event->pos());
+
+        for (QGraphicsItem* item : itemsUnderCursor) {
+            if (item == tempWire) continue;
+            if (Node* nodeUnderCursor = dynamic_cast<Node*>(item)) {
+                clickedNode = nodeUnderCursor;
+                break;
+            }
+            else if (Pin* pinUnderCursor = dynamic_cast<Pin*>(item)) {
+                clickedPin = pinUnderCursor;
+                break;
+            }
         }
 
-        Node* clickedNode = dynamic_cast<Node*>(itemUnderCursor);
-        Pin* clickedPin = dynamic_cast<Pin*>(itemUnderCursor);
-
         if ((clickedNode || clickedPin) && tempWire == nullptr) {
+            if (clickedPin && clickedPin->isConnected()) {
+                return;
+            }
+
             tempWire = new Wire();
 
             if (clickedNode) {
@@ -170,6 +183,50 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
 
             return;
         }
+        else if (tempWire != nullptr) {
+            bool isInvalidConnection = false;
+
+            if ((!clickedNode && !clickedPin) ||
+                (clickedNode && tempWire->getStartNode() == clickedNode) ||
+                (clickedNode && tempWire->getStartNode() && tempWire->getStartNode()->getType() != clickedNode->getType()) ||
+                (clickedPin && tempWire->getStartPin()) ||
+                (clickedPin && clickedPin->isConnected()))
+            {
+                isInvalidConnection = true;
+            }
+
+            if (isInvalidConnection) {
+                scene()->removeItem(tempWire);
+                delete tempWire;
+                tempWire = nullptr;
+                return;
+            }
+
+            if (clickedNode) {
+                tempWire->setEndItem(clickedNode);
+                tempWire->setEndPos(clickedNode->scenePos());
+            }
+            else if (clickedPin) {
+                tempWire->setEndItem(clickedPin);
+                tempWire->setEndPos(clickedPin->scenePos());
+            }
+
+            if (clickedNode) {
+                clickedNode->addWire(tempWire);
+            } else if (clickedPin) {
+                clickedPin->setWire(tempWire);
+            }
+
+            if (tempWire->getStartNode()) {
+                tempWire->getStartNode()->addWire(tempWire);
+            } else if (tempWire->getStartPin()) {
+                tempWire->getStartPin()->setWire(tempWire);
+            }
+
+            tempWire = nullptr;
+
+            return;
+        }
     }
     else {
         QGraphicsView::mousePressEvent(event);
@@ -185,8 +242,20 @@ void CircuitView::mouseReleaseEvent(QMouseEvent* event) {
 
 void CircuitView::mouseMoveEvent(QMouseEvent* event) {
     QPointF scenePos = mapToScene(event->position().toPoint());
+    QPointF snappedPos = Snapping::snapToGrid(scenePos);
     emit mouseMoved(scenePos);
+    if (currentMode == WireMode && tempWire != nullptr) {
+        tempWire->setEndPos(snappedPos);
+        return;
+    }
     QGraphicsView::mouseMoveEvent(event);
+}
+
+void CircuitView::mouseDoubleClickEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton && currentMode == WireMode) {
+        return;
+    }
+    QGraphicsView::mouseDoubleClickEvent(event);
 }
 
 void CircuitView::keyPressEvent(QKeyEvent* event) {
@@ -200,10 +269,12 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
         }
     }
     else if (event->key() == Qt::Key_Delete) {
-        for (QGraphicsItem* item : this->scene()->selectedItems()) {
+        const QList<QGraphicsItem*> selectedItemsList = this->scene()->selectedItems();
+        for (QGraphicsItem* item : selectedItemsList) {
             if (dynamic_cast<Pin*>(item) != nullptr) {
                 continue;
             }
+            scene()->removeItem(item);
             delete item;
         }
     }

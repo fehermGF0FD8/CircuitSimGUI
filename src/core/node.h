@@ -15,7 +15,7 @@ class QGraphicsSceneMouseEvent;
 class QPainter;
 class QStyleOptionGraphicsItem;
 class QWidget;
-// class Wire;
+class Wire;
 
 class Node: public QGraphicsObject
 {
@@ -25,7 +25,7 @@ public:
     explicit Node(const QString& idParam,
                   NodeType typeParam,
                   QGraphicsItem* parent = nullptr);
-    virtual ~Node() = default;
+    virtual ~Node();
 
     QRectF boundingRect() const override;
     void paint(QPainter* painter,
@@ -37,35 +37,30 @@ public:
 
     NodeType getType() const {return type;}
 
-    /*
-    void addPin(Pin* pinParam);
-    void removePin(Pin* pinParam);
-    QList<Pin*> getPins() const {return connectedPins;}
-    */
+    void addWire(Wire* wireParam) {
+        if (!connectedWires.contains(wireParam)) {
+            connectedWires.append(wireParam);
+        }
+    }
 
-    /*
-    void addWire(Wire* wireParam);
-    void removeWire(Wire* wireParam);
+    void removeWire(Wire* wireParam) {
+        connectedWires.removeAll(wireParam);
+    }
+
     QList<Wire*> getWires() const {return connectedWires;}
-    */
 
     // void mergeWith(Node* nodeParam);
 
 private:
     QString id;
     NodeType type;
-    QList<Pin*> connectedPins;
-    // QList<Wire*> connectedWires;
+    QList<Wire*> connectedWires;
     bool isHovered;
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
     void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
-
-signals:
-    void nodeClicked(Node* nodeParam);
 };
 
 #endif // NODE_H

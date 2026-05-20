@@ -27,6 +27,20 @@ Wire::Wire(QGraphicsItem* parent):
     endPos = QPointF(0, 0);
 }
 
+Wire::~Wire() {
+    if (startNode != nullptr) {
+        startNode->removeWire(this);
+    } else if (startPin != nullptr) {
+        startPin->removeWire();
+    }
+
+    if (endNode != nullptr) {
+        endNode->removeWire(this);
+    } else if (endPin != nullptr) {
+        endPin->removeWire();
+    }
+}
+
 QRectF Wire::boundingRect() const {
     return ComponentPainter::calculateWireBoundingRect(this);
 }

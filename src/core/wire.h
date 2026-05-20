@@ -23,7 +23,7 @@ class Wire: public QGraphicsObject
 
 public:
     explicit Wire(QGraphicsItem* parent = nullptr);
-    virtual ~Wire() = default;
+    virtual ~Wire();
 
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
@@ -37,9 +37,13 @@ public:
     QPointF getEndPos() const {return endPos;}
 
     void setStartItem(Node* startNodeParam);
+    Node* getStartNode() const {return startNode;}
     void setStartItem(Pin* startPinParam);
+    Pin* getStartPin() const {return startPin;}
     void setEndItem(Node* endNodeParam);
+    Node* getEndNode() const {return endNode;}
     void setEndItem(Pin* endPinParam);
+    Pin* getEndPin() const {return endPin;}
 
     void updatePosition();
 

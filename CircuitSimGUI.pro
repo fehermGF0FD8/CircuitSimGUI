@@ -38,6 +38,7 @@ HEADERS += \
     src/core/node.h \
     src/core/nodetype.h \
     src/core/pin.h \
+    src/core/snapping.h \
     src/core/wire.h \
     src/gui/addcircuitdialog.h \
     src/core/builtincomponent.h \

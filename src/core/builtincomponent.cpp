@@ -1,6 +1,8 @@
 #include "builtincomponent.h"
 
 #include "pin.h"
+#include "snapping.h"
+#include "wire.h"
 
 #include <QGraphicsItem>
 #include <QGraphicsScene>
@@ -29,13 +31,15 @@ void BuiltInComponent::addPin(Pin* pinParam) {
 
 QVariant BuiltInComponent::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionChange && scene()) {
-        QPointF newPos = value.toPointF();
-        int gridSize = 20;
-
-        qreal snappedX = qRound(newPos.x() / gridSize) * gridSize;
-        qreal snappedY = qRound(newPos.y() / gridSize) * gridSize;
-
-        return QPointF(snappedX, snappedY);
+        return Snapping::snapToGrid(value.toPointF());
+    }
+    if (change == ItemPositionHasChanged) {
+        for (Pin* pin : pins) {
+            Wire* connectedWire = pin->getWire();
+            if (connectedWire) {
+                connectedWire->updatePosition();
+            }
+        }
     }
     return QGraphicsObject::itemChange(change, value);
 }
