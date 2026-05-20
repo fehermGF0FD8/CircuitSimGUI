@@ -8,6 +8,7 @@
 
 #include "node.h"
 #include "pin.h"
+#include "wire.h"
 
 #include <QAction>
 #include <QContextMenuEvent>
@@ -139,6 +140,37 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
         );
         QGraphicsView::mousePressEvent(&panningEvent);
     }
+    else if ((event->button() == Qt::LeftButton) && (currentMode == WireMode)) {
+        QGraphicsItem* itemUnderCursor = itemAt(event->pos());
+
+        if (!itemUnderCursor) {
+            QGraphicsView::mousePressEvent(event);
+            return;
+        }
+
+        Node* clickedNode = dynamic_cast<Node*>(itemUnderCursor);
+        Pin* clickedPin = dynamic_cast<Pin*>(itemUnderCursor);
+
+        if ((clickedNode || clickedPin) && tempWire == nullptr) {
+            tempWire = new Wire();
+
+            if (clickedNode) {
+                tempWire->setStartItem(clickedNode);
+                tempWire->setStartPos(clickedNode->scenePos());
+            }
+            else if (clickedPin) {
+                tempWire->setStartItem(clickedPin);
+                tempWire->setStartPos(clickedPin->scenePos());
+            }
+
+            QPointF sceneClickPos = mapToScene(event->pos());
+            tempWire->setEndPos(sceneClickPos);
+
+            scene()->addItem(tempWire);
+
+            return;
+        }
+    }
     else {
         QGraphicsView::mousePressEvent(event);
     }
@@ -181,6 +213,11 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
 }
 
 void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
+    if (currentMode == WireMode) {
+        event->accept();
+        return;
+    }
+
     contextMenuPosition = event->pos();
 
     QMenu contextMenu(this);

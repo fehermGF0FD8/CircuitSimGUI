@@ -38,10 +38,8 @@ private slots:
     // Updates the status bar with current mouse coordinates and grid snapping
     void updateCursorInfo(const QPointF& position);
     // Toggles visibility of the component library based on active tabs
-    void syncCompLib();
+    void syncUiState();
     // Adds the selected component to the active scene upon double-clicking
     void compLibItemDoubleClicked(QListWidgetItem* item);
-
-
 };
 #endif // MAINWINDOW_H

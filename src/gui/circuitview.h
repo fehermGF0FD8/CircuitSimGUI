@@ -17,6 +17,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QPainter;
 class QWheelEvent;
+class Wire;
 
 class CircuitView : public QGraphicsView
 {
@@ -24,6 +25,9 @@ class CircuitView : public QGraphicsView
 
 public:
     explicit CircuitView(QWidget* parent = nullptr);
+
+    enum ViewMode {PlaceMode, WireMode};
+    void setViewMode(ViewMode mode) {currentMode = mode;}
 
     void addComponentAt(ComponentType type, const QPointF& position);
     void addNodeAt(NodeType type, const QPointF& position);
@@ -52,6 +56,8 @@ protected:
 private:
     QPoint contextMenuPosition;
     IDmanager idManager;
+    ViewMode currentMode = PlaceMode;
+    Wire* tempWire = nullptr;
 
 private slots:
     void addComponent();

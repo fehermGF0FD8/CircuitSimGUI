@@ -4,6 +4,7 @@
 #include "addcircuitdialog.h"
 #include "circuitview.h"
 
+#include <QActionGroup>
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QListWidget>
@@ -22,7 +23,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->setWindowTitle("CircuitSimGUI");
 
-    ui->dockWidget->setVisible(false);
+    QActionGroup *modeGroup = new QActionGroup(this);
+    modeGroup->addAction(ui->placeMode);
+    modeGroup->addAction(ui->wireMode);
+    modeGroup->setExclusive(true);
+
+    ui->placeMode->setEnabled(false);
+    ui->wireMode->setEnabled(false);
+
+    ui->placeMode->setChecked(false);
+    ui->wireMode->setChecked(false);
 
     // Safety lock: Force the QStackedWidget to the welcome screen on startup,
     // overriding the last saved state from Qt Designer.
@@ -30,6 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Safety lock 2: Ensure the workspace has exactly 0 tabs on startup
     ui->tabWidget->clear();
+
+    ui->dockWidget->setVisible(false);
 
     setupConnections();
 }
@@ -42,21 +54,19 @@ void MainWindow::setupConnections() {
     connect(ui->newProject, &QAction::triggered, this, &MainWindow::createNewProject);
     connect(ui->newCircuitOrSubcircuit, &QAction::triggered, this, &MainWindow::addCircuit);
     connect(ui->exitApplication, &QAction::triggered, this, &MainWindow::quitApp);
-    connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::syncCompLib);
-    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::syncCompLib);
+    connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::syncUiState);
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::syncUiState);
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeTab);
     connect(ui->listWidget, &QListWidget::itemDoubleClicked, this, &MainWindow::compLibItemDoubleClicked);
+    connect(ui->placeMode, &QAction::toggled, this, &MainWindow::syncUiState);
+    connect(ui->wireMode, &QAction::toggled, this, &MainWindow::syncUiState);
 }
 
 void MainWindow::createNewProject() {
     // Switch to the workspace view (index 1 contains the QTabWidget)
     ui->stackedWidget->setCurrentIndex(1);
 
-    // Enable project-specific actions in the menu and toolbar
-    ui->saveProject->setEnabled(true);
-    ui->exportProject->setEnabled(true);
-    ui->newCircuitOrSubcircuit->setEnabled(true);
-    ui->newController->setEnabled(true);
+    syncUiState();
 }
 
 void MainWindow::addCircuit() {
@@ -71,8 +81,10 @@ void MainWindow::addCircuit() {
         int newTabIndex = ui->tabWidget->addTab(circuitView, data.circuitName);
         ui->tabWidget->setCurrentIndex(newTabIndex);
 
-        ui->newProject->setEnabled(false);
-        ui->newCircuitOrSubcircuit->setEnabled(false);
+        syncUiState();
+        ui->placeMode->setChecked(true);
+        syncUiState();
+
         connect(circuitView, &CircuitView::mouseMoved, this, &MainWindow::updateCursorInfo);
     }
 }
@@ -97,9 +109,7 @@ void MainWindow::closeTab(int index) {
     // Delete the actual widget from memory to prevent memory leaks
     delete tabToClose;
 
-    if (ui->tabWidget->count() == 0) {
-        statusBar()->clearMessage();
-    }
+    syncUiState();
 }
 
 void MainWindow::updateCursorInfo(const QPointF& position) {
@@ -116,11 +126,39 @@ void MainWindow::updateCursorInfo(const QPointF& position) {
     statusBar()->showMessage(text);
 }
 
-void MainWindow::syncCompLib() {
-    bool inWorkspaceView = (ui->stackedWidget->currentIndex() == 1);;
+void MainWindow::syncUiState() {
+    bool inWorkspaceView = (ui->stackedWidget->currentIndex() == 1);
     bool hasActiveTabs = (ui->tabWidget->count() > 0);
+    bool isPlaceModeActive = ui->placeMode->isChecked();
 
-    ui->dockWidget->setVisible(inWorkspaceView && hasActiveTabs);
+    ui->dockWidget->setVisible(inWorkspaceView && hasActiveTabs && isPlaceModeActive);
+
+    ui->saveProject->setEnabled(inWorkspaceView);
+    ui->exportProject->setEnabled(inWorkspaceView);
+    ui->newCircuitOrSubcircuit->setEnabled(inWorkspaceView);
+    ui->newController->setEnabled(inWorkspaceView);
+
+    ui->placeMode->setEnabled(hasActiveTabs);
+    ui->wireMode->setEnabled(hasActiveTabs);
+
+    if (!hasActiveTabs) {
+        ui->placeMode->setChecked(false);
+        ui->wireMode->setChecked(false);
+
+        statusBar()->clearMessage();
+    }
+
+    if (hasActiveTabs) {
+        CircuitView* currentView = qobject_cast<CircuitView*>(ui->tabWidget->currentWidget());
+
+        if (currentView) {
+            if (isPlaceModeActive) {
+                currentView->setViewMode(CircuitView::PlaceMode);
+            } else {
+                currentView->setViewMode(CircuitView::WireMode);
+            }
+        }
+    }
 }
 
 void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
@@ -155,3 +193,4 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
     else return;
     currentCircuitView->addComponentAt(type, scenePos);
 }
+

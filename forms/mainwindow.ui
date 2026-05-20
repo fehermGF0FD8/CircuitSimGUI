@@ -143,8 +143,8 @@
    <addaction name="separator"/>
    <addaction name="exportProject"/>
    <addaction name="separator"/>
-   <addaction name="newCircuitOrSubcircuit"/>
-   <addaction name="newController"/>
+   <addaction name="placeMode"/>
+   <addaction name="wireMode"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="sizePolicy">
@@ -301,6 +301,28 @@
    </property>
    <property name="text">
     <string>New Controller</string>
+   </property>
+  </action>
+  <action name="placeMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Place Mode</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="wireMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Wire Mode</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>
