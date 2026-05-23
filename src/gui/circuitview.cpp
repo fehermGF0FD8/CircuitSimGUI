@@ -6,6 +6,7 @@
 #include "currentsource.h"
 #include "voltagesource.h"
 
+#include "networktopology.h"
 #include "node.h"
 #include "nodetype.h"
 #include "pin.h"
@@ -213,14 +214,23 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
 
             if (clickedNode) {
                 clickedNode->addWire(tempWire);
-            } else if (clickedPin) {
+            }
+            else if (clickedPin) {
                 clickedPin->setWire(tempWire);
             }
 
             if (tempWire->getStartNode()) {
                 tempWire->getStartNode()->addWire(tempWire);
-            } else if (tempWire->getStartPin()) {
+            }
+            else if (tempWire->getStartPin()) {
                 tempWire->getStartPin()->setWire(tempWire);
+            }
+
+            if (clickedNode) {
+                NetworkTopology::updateNetworkNames(clickedNode);
+            }
+            else if (tempWire->getStartNode()) {
+                NetworkTopology::updateNetworkNames(tempWire->getStartNode());
             }
 
             tempWire = nullptr;
@@ -269,13 +279,63 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
         }
     }
     else if (event->key() == Qt::Key_Delete) {
-        const QList<QGraphicsItem*> selectedItemsList = this->scene()->selectedItems();
-        for (QGraphicsItem* item : selectedItemsList) {
-            if (dynamic_cast<Pin*>(item) != nullptr) {
+        const QList<QGraphicsItem*> itemsList = this->scene()->selectedItems();
+        for (QGraphicsItem* item : itemsList) {
+            Pin* pin = dynamic_cast<Pin*>(item);
+            Node* node = dynamic_cast<Node*>(item);
+            Wire* wire = dynamic_cast<Wire*>(item);
+            BuiltInComponent* component = dynamic_cast<BuiltInComponent*>(item);
+
+            if (pin) {
                 continue;
             }
-            scene()->removeItem(item);
-            delete item;
+            else if (node) {
+                QList<Node*> neighborsToUpdate;
+                for (Wire* wire : node->getWires()) {
+                    if (wire->getStartNode() && wire->getStartNode() != node) {
+                        neighborsToUpdate.append(wire->getStartNode());
+                    } else if (wire->getEndNode() && wire->getEndNode() != node) {
+                        neighborsToUpdate.append(wire->getEndNode());
+                    }
+                }
+                scene()->removeItem(item);
+                delete item;
+                for (Node* neighbor : neighborsToUpdate) {
+                    if (!itemsList.contains(neighbor)) {
+                        NetworkTopology::updateNetworkNames(neighbor);
+                    }
+                }
+                continue;
+            }
+            else if (wire) {
+                Node* startNode = wire->getStartNode();
+                Node* endNode = wire->getEndNode();
+
+                scene()->removeItem(item);
+                delete item;
+
+                if (startNode) {
+                    NetworkTopology::updateNetworkNames(startNode);
+                }
+                if (endNode) {
+                    NetworkTopology::updateNetworkNames(endNode);
+                }
+
+                continue;
+            }
+            else if (component) {
+                scene()->removeItem(item);
+                delete item;
+            }
+            else {
+                scene()->removeItem(item);
+                delete item;
+            }
+        }
+    }
+    else if (event->key() == Qt::Key_T) {
+        if (currentMode == WireMode && tempWire != nullptr) {
+            tempWire->toggleRoutingMode();
         }
     }
     else {
@@ -453,6 +513,12 @@ void CircuitView::reassignIDs() {
 
     reassignListIDs(nNodes, "N", idManager);
     reassignListIDs(bNodes, "B", idManager);
+
+    for (Node* node: std::as_const(allNodes)) {
+        if (node) {
+            NetworkTopology::updateNetworkNames(node);
+        }
+    }
 
     scene()->update();
 }

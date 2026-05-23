@@ -165,7 +165,7 @@ void ComponentPainter::drawPin(QPainter* painter, bool isSelected, bool isHovere
 }
 
 void ComponentPainter::drawNode(QPainter* painter, NodeType type, bool isSelected,
-                                bool isHovered, const QString& id) {
+                                bool isHovered, const QString& netName) {
     painter->setRenderHint(QPainter::Antialiasing);
 
     QColor nodeColor;
@@ -200,17 +200,16 @@ void ComponentPainter::drawNode(QPainter* painter, NodeType type, bool isSelecte
     painter->setFont(font);
     painter->setPen(nodeColor);
 
-    painter->drawText(QPointF(5, -5), id);
+    painter->drawText(QPointF(5, -5), netName);
 }
 
 QRectF ComponentPainter::calculateWireBoundingRect(const Wire* wire) {
     if (!wire) return QRectF();
-    // normalized(): normalized rect based on start and end points
-    // adjusted(...): non-zero area even for perfectly horizontal or vertical wires
-    return QRectF(wire->getStartPos(), wire->getEndPos()).normalized().adjusted(-4, -4, 4, 4);
+
+    return wire->shape().boundingRect();
 }
 
-void ComponentPainter::drawWire(QPainter* painter, const QPointF& start, const QPointF& end,
+void ComponentPainter::drawWire(QPainter* painter, const QPainterPath& path,
                                 const QColor& baseColor, bool isSelected, bool isHovered) {
     painter->setRenderHint(QPainter::Antialiasing);
 
@@ -232,6 +231,6 @@ void ComponentPainter::drawWire(QPainter* painter, const QPointF& start, const Q
     pen.setCosmetic(true);
 
     painter->setPen(pen);
-    painter->drawLine(start, end);
+    painter->drawPath(path);
 }
 

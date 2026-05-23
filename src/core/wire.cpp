@@ -9,6 +9,7 @@
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
 
@@ -46,14 +47,10 @@ QRectF Wire::boundingRect() const {
 }
 
 QPainterPath Wire::shape() const {
-    QPainterPath path;
-    path.moveTo(startPos);
-    path.lineTo(endPos);
-
     // using stroker in order to widen the collision shape of the wire
     QPainterPathStroker stroker;
     stroker.setWidth(6);
-    return stroker.createStroke(path);
+    return stroker.createStroke(getPath());
 }
 
 QColor Wire::getBaseColor() const {
@@ -68,9 +65,26 @@ QColor Wire::getBaseColor() const {
     return Qt::black;
 }
 
+QPainterPath Wire::getPath() const {
+    QPainterPath path;
+
+    path.moveTo(getStartPos());
+
+    if (isHorizontalFirst) {
+        path.lineTo(getEndPos().x(), getStartPos().y());
+        path.lineTo(getEndPos());
+    }
+    else {
+        path.lineTo(getStartPos().x(), getEndPos().y());
+        path.lineTo(getEndPos());
+    }
+
+    return path;
+}
+
 void Wire::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     QColor baseColor = getBaseColor();
-    ComponentPainter::drawWire(painter, startPos, endPos, baseColor, isSelected(), isHovered);
+    ComponentPainter::drawWire(painter, getPath(), baseColor, isSelected(), isHovered);
 }
 
 void Wire::setStartPos(const QPointF& startPosParam) {
@@ -105,6 +119,11 @@ void Wire::setEndItem(Pin* endPinParam) {
     endNode = nullptr;
 }
 
+void Wire::toggleRoutingMode() {
+    isHorizontalFirst = !isHorizontalFirst;
+    update();
+}
+
 void Wire::updatePosition() {
     if (startNode) {
         setStartPos(startNode->scenePos());
@@ -117,6 +136,9 @@ void Wire::updatePosition() {
     } else if (endPin) {
         setEndPos(endPin->scenePos());
     }
+
+    prepareGeometryChange();
+    update();
 }
 
 void Wire::hoverEnterEvent(QGraphicsSceneHoverEvent* event) {
@@ -129,9 +151,4 @@ void Wire::hoverLeaveEvent(QGraphicsSceneHoverEvent* event) {
     isHovered = false;
     update();
     QGraphicsObject::hoverLeaveEvent(event);
-}
-
-void Wire::mousePressEvent(QGraphicsSceneMouseEvent* event) {
-    emit wireClicked(this);
-    event->accept();
 }

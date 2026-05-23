@@ -4,6 +4,7 @@
 #include "../nodetype.h"
 
 #include <QColor>
+#include <QPainterPath>
 #include <QPointF>
 #include <QRectF>
 #include <QString>
@@ -28,10 +29,10 @@ namespace ComponentPainter {
 
     const QRectF NODE_BOUND_RECT = QRectF(-5, -15, 40, 20);
     void drawNode(QPainter* painter, NodeType type, bool isSelected,
-                  bool isHovered, const QString& id);
+                  bool isHovered, const QString& netName);
 
     QRectF calculateWireBoundingRect(const Wire* wire);
-    void drawWire(QPainter* painter, const QPointF& start, const QPointF& end,
+    void drawWire(QPainter* painter, const QPainterPath& path,
                   const QColor& baseColor, bool isSelected, bool isHovered);
 }
 

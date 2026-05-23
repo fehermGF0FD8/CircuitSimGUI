@@ -17,6 +17,7 @@ SOURCES += \
     src/core/entities/voltagesource.cpp \
     src/core/idmanager.cpp \
     src/core/entities/capacitor.cpp \
+    src/core/networktopology.cpp \
     src/core/node.cpp \
     src/core/pin.cpp \
     src/core/wire.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     src/core/entities/voltagesource.h \
     src/core/idmanager.h \
     src/core/entities/capacitor.h \
+    src/core/networktopology.h \
     src/core/node.h \
     src/core/nodetype.h \
     src/core/pin.h \

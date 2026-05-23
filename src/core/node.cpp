@@ -15,6 +15,7 @@
 Node::Node(const QString& idParam, NodeType typeParam, QGraphicsItem* parent):
     QGraphicsObject(parent),
     id(idParam),
+    netName(idParam),
     type(typeParam),
     isHovered(false)
 {
@@ -36,7 +37,7 @@ QRectF Node::boundingRect() const {
 }
 
 void Node::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
-    ComponentPainter::drawNode(painter, getType(), isSelected(), isHovered, getID());
+    ComponentPainter::drawNode(painter, getType(), isSelected(), isHovered, getNetName());
 }
 
 QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value) {

@@ -35,6 +35,17 @@ public:
     void setID(const QString& nodeIDParam) {id = nodeIDParam;}
     QString getID() const {return id;}
 
+    void setNetName(const QString& netNameParam) {
+        if (netName != netNameParam) {
+            netName = netNameParam;
+            update();
+        }
+    }
+
+    QString getNetName() const {
+        return netName;
+    }
+
     NodeType getType() const {return type;}
 
     void addWire(Wire* wireParam) {
@@ -49,10 +60,9 @@ public:
 
     QList<Wire*> getWires() const {return connectedWires;}
 
-    // void mergeWith(Node* nodeParam);
-
 private:
     QString id;
+    QString netName;
     NodeType type;
     QList<Wire*> connectedWires;
     bool isHovered;

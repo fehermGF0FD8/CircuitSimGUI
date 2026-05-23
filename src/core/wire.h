@@ -14,6 +14,7 @@ class QGraphicsItem;
 class QGraphicsSceneHoverEvent;
 class QGraphicsSceneMouseEvent;
 class QPainter;
+class QPainterPath;
 class QStyleOptionGraphicsItem;
 class QWidget;
 
@@ -45,6 +46,7 @@ public:
     void setEndItem(Pin* endPinParam);
     Pin* getEndPin() const {return endPin;}
 
+    void toggleRoutingMode();
     void updatePosition();
 
 private:
@@ -57,16 +59,14 @@ private:
     Pin* endPin = nullptr;
 
     bool isHovered;
+    bool isHorizontalFirst = true;
 
     QColor getBaseColor() const;
+    QPainterPath getPath() const;
 
 protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
-
-signals:
-    void wireClicked(Wire* wireParam);
 };
 
 #endif // WIRE_H
