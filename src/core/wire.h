@@ -4,6 +4,7 @@
 #include <QGraphicsObject>
 
 #include <QColor>
+#include <QJsonObject>
 #include <QPainterPath>
 #include <QPointF>
 #include <QRectF>
@@ -46,8 +47,19 @@ public:
     void setEndItem(Pin* endPinParam);
     Pin* getEndPin() const {return endPin;}
 
+    // !!!
+    void setIsHorizontalFirst(bool isHorizontalFirstParam) {
+        isHorizontalFirst = isHorizontalFirstParam;
+    }
+    bool getIsHorizontalFirst() const {
+        return isHorizontalFirst;
+    }
+
     void toggleRoutingMode();
     void updatePosition();
+
+    // !!!
+    QJsonObject toJson() const;
 
 private:
     QPointF startPos;

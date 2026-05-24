@@ -4,6 +4,7 @@
 #include "nodetype.h"
 
 #include <QGraphicsObject>
+#include <QJsonObject>
 #include <QList>
 #include <QRectF>
 #include <QString>
@@ -58,7 +59,10 @@ public:
         connectedWires.removeAll(wireParam);
     }
 
-    QList<Wire*> getWires() const {return connectedWires;}
+    const QList<Wire*>& getWires() const {return connectedWires;}
+
+    // !!!
+    QJsonObject toJson() const;
 
 private:
     QString id;

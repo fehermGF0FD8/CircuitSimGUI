@@ -29,6 +29,23 @@ void BuiltInComponent::addPin(Pin* pinParam) {
     }
 }
 
+// !!!
+QJsonObject BuiltInComponent::toJson() const {
+    QJsonObject jsonComponent;
+
+    jsonComponent["id"] = getID();
+    jsonComponent["type"] = static_cast<int>(getType());
+
+    jsonComponent["x"] = scenePos().x();
+    jsonComponent["y"] = scenePos().y();
+    jsonComponent["rotation"] = rotation();
+
+    // QJsonObject parameters;
+    // jsonComponent["parameters"] = parameters;
+
+    return jsonComponent;
+}
+
 QVariant BuiltInComponent::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionChange && scene()) {
         return Snapping::snapToGrid(value.toPointF());

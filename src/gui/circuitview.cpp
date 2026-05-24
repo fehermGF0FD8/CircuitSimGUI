@@ -1,11 +1,8 @@
 #include "circuitview.h"
 
-#include "resistor.h"
-#include "conductance.h"
-#include "capacitor.h"
-#include "currentsource.h"
-#include "voltagesource.h"
+#include "entities.h"
 
+#include "circuit.h"
 #include "networktopology.h"
 #include "node.h"
 #include "nodetype.h"
@@ -70,7 +67,11 @@ void reassignListIDs(QList<T*>& items, const QString& prefix, IDmanager& idManag
     }
 }
 
-CircuitView::CircuitView(QWidget* parent): QGraphicsView(parent) {
+// !!!
+CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
+    QGraphicsView(parent),
+    circuitModel(circuit)
+{
     QGraphicsScene* tempScene = new QGraphicsScene(this);
     tempScene->setSceneRect(-2000, -2000, 4000, 4000);
     this->setScene(tempScene);
@@ -78,6 +79,11 @@ CircuitView::CircuitView(QWidget* parent): QGraphicsView(parent) {
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     this->viewport()->setMouseTracking(true);
+}
+
+// !!!
+CircuitView::~CircuitView() {
+    delete circuitModel;
 }
 
 void CircuitView::wheelEvent(QWheelEvent* event) {
@@ -130,6 +136,7 @@ void CircuitView::drawBackground(QPainter* painter, const QRectF& rect) {
     painter->drawPoints(points.data(), points.size());
 }
 
+// !!!
 void CircuitView::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::MiddleButton) {
         setDragMode(QGraphicsView::ScrollHandDrag);
@@ -233,6 +240,9 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
                 NetworkTopology::updateNetworkNames(tempWire->getStartNode());
             }
 
+            // !!!
+            circuitModel->addWire(tempWire);
+
             tempWire = nullptr;
 
             return;
@@ -268,6 +278,7 @@ void CircuitView::mouseDoubleClickEvent(QMouseEvent *event) {
     QGraphicsView::mouseDoubleClickEvent(event);
 }
 
+// !!!
 void CircuitView::keyPressEvent(QKeyEvent* event) {
     if(!scene()) {
         QGraphicsView::keyPressEvent(event);
@@ -291,14 +302,17 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
             }
             else if (node) {
                 QList<Node*> neighborsToUpdate;
-                for (Wire* wire : node->getWires()) {
-                    if (wire->getStartNode() && wire->getStartNode() != node) {
-                        neighborsToUpdate.append(wire->getStartNode());
-                    } else if (wire->getEndNode() && wire->getEndNode() != node) {
-                        neighborsToUpdate.append(wire->getEndNode());
+                for (Wire* connectedWire : node->getWires()) {
+                    if (connectedWire->getStartNode() && connectedWire->getStartNode() != node) {
+                        neighborsToUpdate.append(connectedWire->getStartNode());
+                    } else if (connectedWire->getEndNode() && connectedWire->getEndNode() != node) {
+                        neighborsToUpdate.append(connectedWire->getEndNode());
                     }
+                    circuitModel->removeWire(connectedWire);
                 }
                 scene()->removeItem(item);
+                // !!!
+                circuitModel->removeNode(node);
                 delete item;
                 for (Node* neighbor : neighborsToUpdate) {
                     if (!itemsList.contains(neighbor)) {
@@ -312,6 +326,8 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
                 Node* endNode = wire->getEndNode();
 
                 scene()->removeItem(item);
+                // !!!
+                circuitModel->removeWire(wire);
                 delete item;
 
                 if (startNode) {
@@ -324,7 +340,15 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
                 continue;
             }
             else if (component) {
+                // !!!
+                for (Pin* componentPin : component->getPins()) {
+                    if (Wire* pinWire = componentPin->getWire()) {
+                        circuitModel->removeWire(pinWire);
+                    }
+                }
                 scene()->removeItem(item);
+                // !!!
+                circuitModel->removeComponent(component);
                 delete item;
             }
             else {
@@ -414,6 +438,7 @@ void CircuitView::addNode() {
     addNodeAt(type, scenePos);
 }
 
+// !!!
 void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     if (!scene()) return;
 
@@ -447,14 +472,18 @@ void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     }
 
     if (newComponent) {
-        QString newCompID = idManager.getNextID(prefix);
+        // !!!
+        QString newCompID = circuitModel->getIdManager().getNextID(prefix);
         newComponent->setID(newCompID);
 
         scene()->addItem(newComponent);
+        // !!!
+        circuitModel->addComponent(newComponent);
         newComponent->setPos(position);
     }
 }
 
+// !!!
 void CircuitView::addNodeAt(NodeType type, const QPointF& position) {
     if (!scene()) return;
 
@@ -472,13 +501,17 @@ void CircuitView::addNodeAt(NodeType type, const QPointF& position) {
     default: break;
     }
 
-    QString newNodeID = idManager.getNextID(prefix);
+    // !!!
+    QString newNodeID = circuitModel->getIdManager().getNextID(prefix);
     newNode = new Node(newNodeID, type);
 
     scene()->addItem(newNode);
+    // !!!
+    circuitModel->addNode(newNode);
     newNode->setPos(position);
 }
 
+// !!!
 void CircuitView::reassignIDs() {
     if (!scene()) return;
 
@@ -505,14 +538,15 @@ void CircuitView::reassignIDs() {
     QList<Node*> nNodes = filterByPrefix(allNodes, "N");
     QList<Node*> bNodes = filterByPrefix(allNodes, "B");
 
-    reassignListIDs(resistors, "R", idManager);
-    reassignListIDs(conductances, "G", idManager);
-    reassignListIDs(capacitors, "C", idManager);
-    reassignListIDs(currentSources, "I", idManager);
-    reassignListIDs(voltageSources, "V", idManager);
+    // !!!
+    reassignListIDs(resistors, "R", circuitModel->getIdManager());
+    reassignListIDs(conductances, "G", circuitModel->getIdManager());
+    reassignListIDs(capacitors, "C", circuitModel->getIdManager());
+    reassignListIDs(currentSources, "I", circuitModel->getIdManager());
+    reassignListIDs(voltageSources, "V", circuitModel->getIdManager());
 
-    reassignListIDs(nNodes, "N", idManager);
-    reassignListIDs(bNodes, "B", idManager);
+    reassignListIDs(nNodes, "N", circuitModel->getIdManager());
+    reassignListIDs(bNodes, "B", circuitModel->getIdManager());
 
     for (Node* node: std::as_const(allNodes)) {
         if (node) {

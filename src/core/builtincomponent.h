@@ -4,6 +4,7 @@
 #include "componenttype.h"
 
 #include <QGraphicsObject>
+#include <QJsonObject>
 #include <QList>
 #include <QMap>
 #include <QRectF>
@@ -37,10 +38,12 @@ public:
     ComponentType getType() const {return type;}
 
     void addPin(Pin* pinParam);
-    QList<Pin*> getPins() const {return pins;}
+    const QList<Pin*>& getPins() const {return pins;}
 
     // void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
 
+    // !!!
+    QJsonObject toJson() const;
 protected:
     QString id;
     ComponentType type;

@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "addcircuitdialog.h"
+#include "circuit.h"
 #include "circuitview.h"
 #include "snapping.h"
 
@@ -78,7 +79,8 @@ void MainWindow::addCircuit() {
             data.circuitName = "Unnamed Circuit";
         }
 
-        CircuitView* circuitView = new CircuitView(ui->tabWidget);
+        Circuit* circuit = new Circuit(data.circuitName);
+        CircuitView* circuitView = new CircuitView(circuit, ui->tabWidget);
         int newTabIndex = ui->tabWidget->addTab(circuitView, data.circuitName);
         ui->tabWidget->setCurrentIndex(newTabIndex);
 

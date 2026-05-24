@@ -1,5 +1,6 @@
 #include "wire.h"
 
+#include "builtincomponent.h"
 #include "componentpainter.h"
 #include "node.h"
 #include "nodetype.h"
@@ -139,6 +140,39 @@ void Wire::updatePosition() {
 
     prepareGeometryChange();
     update();
+}
+
+// !!!
+QJsonObject Wire::toJson() const {
+    QJsonObject jsonWire;
+
+    QJsonObject jsonStart;
+    if (getStartNode()) {
+        jsonStart["type"] = "Node";
+        jsonStart["id"] = getStartNode()->getID();
+    }
+    else if (getStartPin()) {
+        jsonStart["type"] = "Pin";
+        jsonStart["componentId"] = getStartPin()->getParentComponent()->getID();
+        jsonStart["pinIndex"] = getStartPin()->getPinIndex();
+    }
+    jsonWire["start"] = jsonStart;
+
+    QJsonObject jsonEnd;
+    if (getEndNode()) {
+        jsonEnd["type"] = "Node";
+        jsonEnd["id"] = getEndNode()->getID();
+    }
+    else if (getEndPin()) {
+        jsonEnd["type"] = "Pin";
+        jsonEnd["componentId"] = getEndPin()->getParentComponent()->getID();
+        jsonEnd["pinIndex"] = getEndPin()->getPinIndex();
+    }
+    jsonWire["end"] = jsonEnd;
+
+    jsonWire["isHorizontalFirst"] = isHorizontalFirst;
+
+    return jsonWire;
 }
 
 void Wire::hoverEnterEvent(QGraphicsSceneHoverEvent* event) {

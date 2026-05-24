@@ -11,6 +11,7 @@ INCLUDEPATH += src/gui src/core src/core/entities src/core/graphics
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    src/core/circuit.cpp \
     src/core/graphics/componentpainter.cpp \
     src/core/entities/conductance.cpp \
     src/core/entities/currentsource.cpp \
@@ -29,6 +30,8 @@ SOURCES += \
     src/core/entities/resistor.cpp
 
 HEADERS += \
+    src/core/circuit.h \
+    src/core/entities/entities.h \
     src/core/graphics/componentpainter.h \
     src/core/componenttype.h \
     src/core/entities/conductance.h \

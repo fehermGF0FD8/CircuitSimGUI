@@ -11,6 +11,7 @@
 #include <QPointF>
 #include <QRectF>
 
+class Circuit;
 class IDmanager;
 class QContextMenuEvent;
 class QKeyEvent;
@@ -24,7 +25,9 @@ class CircuitView : public QGraphicsView
     Q_OBJECT;
 
 public:
-    explicit CircuitView(QWidget* parent = nullptr);
+    // !!!
+    explicit CircuitView(Circuit* circuit, QWidget* parent = nullptr);
+    virtual ~CircuitView();
 
     enum ViewMode {PlaceMode, WireMode};
     void setViewMode(ViewMode mode) {currentMode = mode;}
@@ -34,7 +37,7 @@ public:
 
 /*
 public slots:
-    void reassignIDs(); => TODO: available from Tools menu
+    void reassignIDs(); => TODO: let it be available from the Tools menu
 */
 
 protected:
@@ -56,15 +59,15 @@ protected:
     void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
+    Circuit* circuitModel;
     QPoint contextMenuPosition;
-    IDmanager idManager;
     ViewMode currentMode = PlaceMode;
     Wire* tempWire = nullptr;
 
 private slots:
     void addComponent();
     void addNode();
-    // only available via context menu
+    // only available via context menu currently
     void reassignIDs();
 
 signals:

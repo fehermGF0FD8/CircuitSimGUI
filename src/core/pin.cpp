@@ -38,6 +38,14 @@ void Pin::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     ComponentPainter::drawPin(painter, isSelected(), isHovered);
 }
 
+// !!!
+int Pin::getPinIndex() const {
+    if (parentComp) {
+        return parentComp->getPins().indexOf(this);
+    }
+    return -1;
+}
+
 void Pin::hoverEnterEvent(QGraphicsSceneHoverEvent* event) {
     isHovered = true;
     update();

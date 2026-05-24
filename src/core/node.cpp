@@ -40,6 +40,20 @@ void Node::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     ComponentPainter::drawNode(painter, getType(), isSelected(), isHovered, getNetName());
 }
 
+// !!!
+QJsonObject Node::toJson() const {
+    QJsonObject jsonNode;
+
+    jsonNode["id"] = getID();
+    jsonNode["netName"] = getNetName();
+    jsonNode["type"] = static_cast<int>(getType());
+
+    jsonNode["x"] = scenePos().x();
+    jsonNode["y"] = scenePos().y();
+
+    return jsonNode;
+}
+
 QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionChange && scene()) {
         return Snapping::snapToGrid(value.toPointF());

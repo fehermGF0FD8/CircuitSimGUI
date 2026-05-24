@@ -28,6 +28,14 @@ public:
                const QStyleOptionGraphicsItem*,
                QWidget*) override;
 
+    // !!!
+    BuiltInComponent* getParentComponent() const {
+        return parentComp;
+    }
+
+    // !!!
+    int getPinIndex() const;
+
     void setWire(Wire* wireParam) {connectedWire = wireParam;}
     void removeWire() {connectedWire = nullptr;}
     Wire* getWire() const {return connectedWire;}
