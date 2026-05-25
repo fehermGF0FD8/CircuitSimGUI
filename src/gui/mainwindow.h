@@ -3,12 +3,17 @@
 
 #include <QMainWindow>
 
+#include <QString>
+
+class CircuitView;
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
 
+class QCloseEvent;
 class QListWidgetItem;
 class QPointF;
 
@@ -17,8 +22,11 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
+
+protected:
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     Ui::MainWindow *ui;
@@ -29,6 +37,12 @@ private:
 private slots:
     // Sets up the UI for a new project workspace
     void createNewProject();
+    // !!!
+    void saveProject();
+
+    void setupNewTab(CircuitView* view, const QString& tabName);
+    // !!!
+    void loadProject();
     // Opens a dialog to add a new circuit or subcircuit tab
     void addCircuit();
     // Handles the application exit logic

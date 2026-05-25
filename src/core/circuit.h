@@ -1,14 +1,15 @@
 #ifndef CIRCUIT_H
 #define CIRCUIT_H
 
-#include "builtincomponent.h"
 #include "idmanager.h"
-#include "node.h"
-#include "wire.h"
 
 #include <QString>
 #include <QList>
 #include <QJsonObject>
+
+class BuiltInComponent;
+class Node;
+class Wire;
 
 class Circuit
 {

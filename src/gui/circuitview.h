@@ -29,6 +29,8 @@ public:
     explicit CircuitView(Circuit* circuit, QWidget* parent = nullptr);
     virtual ~CircuitView();
 
+    Circuit* getCircuitModel() const {return circuitModel;}
+
     enum ViewMode {PlaceMode, WireMode};
     void setViewMode(ViewMode mode) {currentMode = mode;}
 
@@ -59,7 +61,7 @@ protected:
     void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
-    Circuit* circuitModel;
+    Circuit* circuitModel = nullptr;
     QPoint contextMenuPosition;
     ViewMode currentMode = PlaceMode;
     Wire* tempWire = nullptr;

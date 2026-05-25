@@ -4,13 +4,17 @@
 #include "addcircuitdialog.h"
 #include "circuit.h"
 #include "circuitview.h"
+#include "projectmanager.h"
 #include "snapping.h"
 
 #include <QActionGroup>
+#include <QCloseEvent>
+#include <QFileDialog>
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QMessageBox>
 #include <QPointF>
 #include <QStatusBar>
 #include <QString>
@@ -52,8 +56,30 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent* event) {
+    if (ui->tabWidget->count() == 0) {
+        event->accept();
+        return;
+    }
+
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::warning(this, "Exit Application",
+                                 "Are you sure you want to exit?\nPlease make sure you have saved all open circuits!",
+                                 QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        event->accept();
+    }
+    else {
+        event->ignore();
+    }
+}
+
+// !!!
 void MainWindow::setupConnections() {
     connect(ui->newProject, &QAction::triggered, this, &MainWindow::createNewProject);
+    connect(ui->saveProject, &QAction::triggered, this, &MainWindow::saveProject);
+    connect(ui->loadProject, &QAction::triggered, this, &MainWindow::loadProject);
     connect(ui->newCircuitOrSubcircuit, &QAction::triggered, this, &MainWindow::addCircuit);
     connect(ui->exitApplication, &QAction::triggered, this, &MainWindow::quitApp);
     connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::syncUiState);
@@ -64,11 +90,86 @@ void MainWindow::setupConnections() {
     connect(ui->wireMode, &QAction::toggled, this, &MainWindow::syncUiState);
 }
 
+/*
+ * TODO:
+ * createNewProject currently just opens the workspace with a blank tab;
+ * folder management is not implemented yet
+ */
 void MainWindow::createNewProject() {
     // Switch to the workspace view (index 1 contains the QTabWidget)
     ui->stackedWidget->setCurrentIndex(1);
 
     syncUiState();
+
+    if (ui->tabWidget->count() == 0) {
+        AddCircuitDialog dialog(this);
+        if (dialog.exec() == QDialog::Accepted) {
+            CircuitData data = dialog.getResult();
+            if (data.circuitName.isEmpty()) {
+                data.circuitName = "Unnamed Circuit";
+            }
+
+            Circuit* circuit = new Circuit(data.circuitName);
+            CircuitView* circuitView = new CircuitView(circuit, ui->tabWidget);
+            setupNewTab(circuitView, data.circuitName);
+        }
+    }
+}
+
+/*
+ * TODO:
+ * this action saves a single circuit document currently;
+ * the user must manually save all related circuits into the same directory
+ */
+void MainWindow::saveProject() {
+    CircuitView* currentView = dynamic_cast<CircuitView*>(ui->tabWidget->currentWidget());
+    if (!currentView) return;
+
+    Circuit* currentCircuit = currentView->getCircuitModel();
+
+    QString defaultName = currentCircuit->getName() + ".json";
+
+    QString savePath = QFileDialog::getSaveFileName(this,
+                                                    "Save Project",
+                                                    defaultName,
+                                                    "JSON files (*.json)");
+
+    if (savePath.isEmpty()) return;
+
+    ProjectManager::saveProject(currentCircuit, savePath);
+}
+
+void MainWindow::setupNewTab(CircuitView* view, const QString& tabName) {
+    int index = ui->tabWidget->addTab(view, tabName);
+    ui->tabWidget->setCurrentIndex(index);
+
+    syncUiState();
+    ui->placeMode->setChecked(true);
+    syncUiState();
+
+    connect(view, &CircuitView::mouseMoved, this, &MainWindow::updateCursorInfo);
+}
+
+/*
+ * TODO:
+ * currently loading a single .json file into a new tab;
+ * the action does not handle automatic workspace cleanup or multi-file project loading;
+ * cross-directory files can be opened side-by-side
+ */
+void MainWindow::loadProject() {
+    QString loadPath = QFileDialog::getOpenFileName(this,
+                                                    "Load Project",
+                                                    "",
+                                                    "JSON files (*.json)");
+    if (loadPath.isEmpty()) return;
+
+    Circuit* loadedCircuit = ProjectManager::loadProject(loadPath);
+
+    if (loadedCircuit) {
+        ui->stackedWidget->setCurrentIndex(1);
+        CircuitView* circuitView = new CircuitView(loadedCircuit, ui->tabWidget);
+        setupNewTab(circuitView, loadedCircuit->getName());
+    }
 }
 
 void MainWindow::addCircuit() {
@@ -81,28 +182,37 @@ void MainWindow::addCircuit() {
 
         Circuit* circuit = new Circuit(data.circuitName);
         CircuitView* circuitView = new CircuitView(circuit, ui->tabWidget);
-        int newTabIndex = ui->tabWidget->addTab(circuitView, data.circuitName);
-        ui->tabWidget->setCurrentIndex(newTabIndex);
-
-        syncUiState();
-        ui->placeMode->setChecked(true);
-        syncUiState();
-
-        connect(circuitView, &CircuitView::mouseMoved, this, &MainWindow::updateCursorInfo);
+        setupNewTab(circuitView, data.circuitName);
     }
 }
 
+/*
+ * TODO:
+ * implement "Unsaved Changes" check here;
+ * need to add a condition to check if the current project has been modified;
+ * in case of being modified, show a warning dialog before allowing the window to close
+ */
 void MainWindow::quitApp() {
-    // TODO: Implement "Unsaved Changes" check here!
-    // Need to add a condition to check if the current project (new or loaded)
-    // has been modified. If yes, show a warning dialog (Save/Discard/Cancel)
-    // before allowing the window to close.
-
     // Close the main window (triggers application exit)
     this->close();
 }
 
+/*
+ * TODO:
+ * implement "Unsaved Changes" check here;
+ * need to add a condition to check if the current circuit has been modified;
+ * in case of being modified, show a warning dialog before allowing the tab to close
+ */
 void MainWindow::closeTab(int index) {
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Close Tab",
+                                  "Are you sure you want to close this circuit?\nIf you haven't saved, all changes will be lost!",
+                                  QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::No) {
+        return;
+    }
+
     // Get the pointer to the widget (the workspace) at the clicked tab's index
     QWidget *tabToClose = ui->tabWidget->widget(index);
 
@@ -110,7 +220,9 @@ void MainWindow::closeTab(int index) {
     ui->tabWidget->removeTab(index);
 
     // Delete the actual widget from memory to prevent memory leaks
-    delete tabToClose;
+    if (tabToClose) {
+        tabToClose->deleteLater();
+    }
 
     syncUiState();
 }
@@ -194,4 +306,3 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
     else return;
     currentCircuitView->addComponentAt(type, scenePos);
 }
-

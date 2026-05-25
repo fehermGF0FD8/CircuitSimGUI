@@ -2,11 +2,15 @@
 
 #include "entities.h"
 
+#include "builtincomponent.h"
 #include "componenttype.h"
+#include "node.h"
 #include "pin.h"
+#include "wire.h"
 
 #include <QJsonArray>
 #include <QMap>
+#include <QPointF>
 
 Circuit::Circuit(const QString& name):
     circuitName(name)

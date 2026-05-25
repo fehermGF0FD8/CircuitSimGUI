@@ -21,6 +21,7 @@ SOURCES += \
     src/core/networktopology.cpp \
     src/core/node.cpp \
     src/core/pin.cpp \
+    src/core/projectmanager.cpp \
     src/core/wire.cpp \
     src/gui/addcircuitdialog.cpp \
     src/core/builtincomponent.cpp \
@@ -43,6 +44,7 @@ HEADERS += \
     src/core/node.h \
     src/core/nodetype.h \
     src/core/pin.h \
+    src/core/projectmanager.h \
     src/core/snapping.h \
     src/core/wire.h \
     src/gui/addcircuitdialog.h \

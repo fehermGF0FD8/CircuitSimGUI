@@ -79,6 +79,28 @@ CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     this->viewport()->setMouseTracking(true);
+
+    if (circuitModel) {
+
+        for (BuiltInComponent* comp : circuitModel->getComponents()) {
+            if (comp) {
+                tempScene->addItem(comp);
+            }
+        }
+
+        for (Node* node : circuitModel->getNodes()) {
+            if (node) {
+                tempScene->addItem(node);
+            }
+        }
+
+        for (Wire* wire : circuitModel->getWires()) {
+            if (wire) {
+                tempScene->addItem(wire);
+                wire->updatePosition();
+            }
+        }
+    }
 }
 
 // !!!

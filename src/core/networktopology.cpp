@@ -7,11 +7,11 @@
 #include <QList>
 
 /*
-    Hálózat-összevonó és sziget-kereső algoritmus (Breadth-First Search).
-    A fizikai csatlakozások bejárásának logikája és a Qt konténerekre
-    (QSet, QList) való optimális adaptálása mesterséges intelligencia
-    (Gemini) iránymutatása és kódjavaslata alapján készült.
-*/
+ * Hálózat-összevonó és sziget-kereső algoritmus (Breadth-First Search).
+ * A fizikai csatlakozások bejárásának logikája és a Qt konténerekre
+ * (QSet, QList) való optimális adaptálása mesterséges intelligencia
+ * (Gemini) iránymutatása és kódjavaslata alapján készült.
+ */
 
 void NetworkTopology::updateNetworkNames(Node* startNode) {
     if (!startNode) return;
