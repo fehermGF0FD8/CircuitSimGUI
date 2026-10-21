@@ -12,7 +12,8 @@
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
 
-Pin::Pin(QPointF relativePosParam, BuiltInComponent* parentCompParam):
+Pin::Pin(QPointF relativePosParam,
+         BuiltInComponent* parentCompParam):
     QGraphicsObject(parentCompParam),
     parentComp(parentCompParam),
     isHovered(false)

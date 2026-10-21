@@ -19,7 +19,9 @@ BuiltInComponent::BuiltInComponent(const QString& idParam, ComponentType typePar
 {
     setFlag(ItemIsSelectable);
     setFlag(ItemIsMovable);
+    // Notify itemChange() on position changes to update connected pins/wires
     setFlag(ItemSendsGeometryChanges);
+    // Set rotation origin to the top-left
     setTransformOriginPoint(0, 0);
 }
 
@@ -29,7 +31,6 @@ void BuiltInComponent::addPin(Pin* pinParam) {
     }
 }
 
-// !!!
 QJsonObject BuiltInComponent::toJson() const {
     QJsonObject jsonComponent;
 

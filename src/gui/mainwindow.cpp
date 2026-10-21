@@ -80,7 +80,14 @@ void MainWindow::setupConnections() {
     connect(ui->newProject, &QAction::triggered, this, &MainWindow::createNewProject);
     connect(ui->saveProject, &QAction::triggered, this, &MainWindow::saveProject);
     connect(ui->loadProject, &QAction::triggered, this, &MainWindow::loadProject);
-    connect(ui->newCircuitOrSubcircuit, &QAction::triggered, this, &MainWindow::addCircuit);
+
+
+    connect(ui->newCircuitOrSubcircuit,
+            &QAction::triggered,
+            this,
+            &MainWindow::addCircuit);
+
+
     connect(ui->exitApplication, &QAction::triggered, this, &MainWindow::quitApp);
     connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::syncUiState);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::syncUiState);

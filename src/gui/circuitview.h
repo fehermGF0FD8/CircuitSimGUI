@@ -3,7 +3,6 @@
 
 #include "componenttype.h"
 #include "nodetype.h"
-#include "idmanager.h"
 
 #include <QGraphicsView>
 

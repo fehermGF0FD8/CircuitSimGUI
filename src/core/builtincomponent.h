@@ -42,7 +42,6 @@ public:
 
     // void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
 
-    // !!!
     QJsonObject toJson() const;
 protected:
     QString id;
