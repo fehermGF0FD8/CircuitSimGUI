@@ -37,6 +37,7 @@ public:
     QPointF getStartPos() const {return startPos;}
     void setEndPos(const QPointF& endPosParam);
     QPointF getEndPos() const {return endPos;}
+    void setPathPoints(const QList<QPointF>& pathPointsP);
 
     void setStartItem(Node* startNodeParam);
     Node* getStartNode() const {return startNode;}
@@ -64,6 +65,7 @@ public:
 private:
     QPointF startPos;
     QPointF endPos;
+    QList<QPointF> pathPoints;
 
     Node* startNode = nullptr;
     Pin* startPin = nullptr;

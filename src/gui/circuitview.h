@@ -9,7 +9,9 @@
 #include <QPoint>
 #include <QPointF>
 #include <QRectF>
+#include <memory>
 
+class AutoRouter;
 class Circuit;
 class IDmanager;
 class QContextMenuEvent;
@@ -64,6 +66,8 @@ private:
     QPoint contextMenuPosition;
     ViewMode currentMode = PlaceMode;
     Wire* tempWire = nullptr;
+    std::unique_ptr<AutoRouter> router;
+    bool isRouting = false;
 
 private slots:
     void addComponent();

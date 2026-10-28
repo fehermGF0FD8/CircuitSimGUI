@@ -2,6 +2,7 @@
 
 #include "entities.h"
 
+#include "autorouter.h"
 #include "circuit.h"
 #include "networktopology.h"
 #include "node.h"
@@ -80,6 +81,8 @@ CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     this->viewport()->setMouseTracking(true);
 
+    router = std::make_unique<AutoRouter>(tempScene);
+
     if (circuitModel) {
 
         for (BuiltInComponent* comp : circuitModel->getComponents()) {
@@ -134,7 +137,7 @@ void CircuitView::drawBackground(QPainter* painter, const QRectF& rect) {
         return;
     }
 
-    const int gridSize = 20;
+    const int gridSize = Snapping::GRID_SIZE;
 
     int firstX = qFloor(rect.left() / gridSize);
     int lastX  = qCeil(rect.right() / gridSize);
@@ -206,6 +209,12 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
                 tempWire->setStartPos(clickedPin->scenePos());
             }
 
+            if (router) {
+                router->initRouting(tempWire->getStartPos());
+            }
+
+            isRouting = true;
+
             QPointF sceneClickPos = mapToScene(event->pos());
             tempWire->setEndPos(sceneClickPos);
 
@@ -241,6 +250,29 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
                 tempWire->setEndPos(clickedPin->scenePos());
             }
 
+            if (router) {
+                QPointF finalTargetPos = clickedNode ? clickedNode->scenePos() : clickedPin->scenePos();
+
+                Direction startPED = Direction::None;
+                if (tempWire->getStartPin()) {
+                    startPED = router->getPinExitDirection(tempWire->getStartPin());
+                }
+
+                Direction endPED = Direction::None;
+                if (clickedPin) {
+                    endPED = router->getPinExitDirection(clickedPin);
+                }
+
+                QList<QPointF> finalPath = router->findPath(tempWire->getStartPos(), finalTargetPos, startPED, endPED);
+
+                if (!finalPath.isEmpty()) {
+                    tempWire->setPathPoints(finalPath);
+                } else {
+                    tempWire->setPathPoints({});
+                    tempWire->setEndPos(finalTargetPos);
+                }
+            }
+
             if (clickedNode) {
                 clickedNode->addWire(tempWire);
             }
@@ -265,6 +297,7 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
             // !!!
             circuitModel->addWire(tempWire);
 
+            isRouting = false;
             tempWire = nullptr;
 
             return;
@@ -286,10 +319,34 @@ void CircuitView::mouseMoveEvent(QMouseEvent* event) {
     QPointF scenePos = mapToScene(event->position().toPoint());
     QPointF snappedPos = Snapping::snapToGrid(scenePos);
     emit mouseMoved(scenePos);
-    if (currentMode == WireMode && tempWire != nullptr) {
-        tempWire->setEndPos(snappedPos);
+
+    if (currentMode == WireMode && isRouting && tempWire != nullptr && router != nullptr) {
+        Direction startPED = Direction::None;
+        if (tempWire->getStartPin()) {
+            startPED = router->getPinExitDirection(tempWire->getStartPin());
+        }
+
+        Direction endPED = Direction::None;
+        QList<QGraphicsItem*> itemsAtTarget = scene()->items(snappedPos);
+        for (QGraphicsItem* item : itemsAtTarget) {
+            if (Pin* targetPin = dynamic_cast<Pin*>(item)) {
+                endPED = router->getPinExitDirection(targetPin);
+                break;
+            }
+        }
+
+        QList<QPointF> path = router->findPath(tempWire->getStartPos(), snappedPos, startPED, endPED);
+
+        if (!path.isEmpty()) {
+            tempWire->setPathPoints(path);
+        }
+        else {
+            tempWire->setPathPoints({});
+            tempWire->setEndPos(snappedPos);
+        }
         return;
     }
+
     QGraphicsView::mouseMoveEvent(event);
 }
 

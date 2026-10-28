@@ -69,6 +69,14 @@ QColor Wire::getBaseColor() const {
 QPainterPath Wire::getPath() const {
     QPainterPath path;
 
+    if (!pathPoints.isEmpty()) {
+        path.moveTo(pathPoints.first());
+        for (int i = 1; i < pathPoints.size(); ++i) {
+            path.lineTo(pathPoints[i]);
+        }
+        return path;
+    }
+
     path.moveTo(getStartPos());
 
     if (isHorizontalFirst) {
@@ -81,6 +89,17 @@ QPainterPath Wire::getPath() const {
     }
 
     return path;
+}
+
+void Wire::setPathPoints(const QList<QPointF>& newPath) {
+    prepareGeometryChange();
+    pathPoints = newPath;
+
+    if (!pathPoints.isEmpty()) {
+        startPos = pathPoints.first();
+        endPos = pathPoints.last();
+    }
+    update();
 }
 
 void Wire::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
@@ -137,6 +156,8 @@ void Wire::updatePosition() {
     } else if (endPin) {
         setEndPos(endPin->scenePos());
     }
+
+    pathPoints.clear();
 
     prepareGeometryChange();
     update();
