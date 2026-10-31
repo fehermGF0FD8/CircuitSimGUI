@@ -16,6 +16,10 @@ QRectF Resistor::boundingRect() const {
     return ComponentPainter::ZIGZAG_BOUND_RECT;
 }
 
+QRectF Resistor::getObstacleRect() const {
+    return QRectF(-25, -12, 50, 24);
+}
+
 void Resistor::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     ComponentPainter::drawZigZagComponent(painter, isSelected(), id);
 }

@@ -66,8 +66,15 @@ private:
     QPoint contextMenuPosition;
     ViewMode currentMode = PlaceMode;
     Wire* tempWire = nullptr;
+
     std::unique_ptr<AutoRouter> router;
     bool isRouting = false;
+
+    bool isTransforming = false;
+    QList<Wire*> affectedWires;
+
+    void collectAndHideWires(QGraphicsItem* item);
+    void rerouteAffectedWires();
 
 private slots:
     void addComponent();

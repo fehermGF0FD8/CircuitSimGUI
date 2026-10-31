@@ -45,7 +45,7 @@ class AutoRouter {
 public:
     explicit AutoRouter(QGraphicsScene* sceneP, int gridSizeP = Snapping::GRID_SIZE);
 
-    void initRouting(const QPointF& startPos);
+    void initRouting();
 
     QList<QPointF> findPath(const QPointF& startPos,
                             const QPointF& currentMousePos,
@@ -64,7 +64,7 @@ private:
 
     QVector<QVector<bool>> obstacleMap; // 2D grid representing obstacles
 
-    void updateObstacleMap(const QPointF& startPos); // gathers bounding rects of components on the scene
+    void updateObstacleMap(); // gathers bounding rects of components on the scene
 
     QPoint mapToGrid(const QPointF& scenePos) const;
     QPointF mapToScene(const QPoint& gridPos) const;

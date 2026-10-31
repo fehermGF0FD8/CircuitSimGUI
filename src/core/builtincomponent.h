@@ -28,6 +28,7 @@ public:
     virtual ~BuiltInComponent() = default;
 
     QRectF boundingRect() const override = 0;
+    virtual QRectF getObstacleRect() const = 0;
     void paint(QPainter *painter,
                const QStyleOptionGraphicsItem*,
                QWidget*) override = 0;

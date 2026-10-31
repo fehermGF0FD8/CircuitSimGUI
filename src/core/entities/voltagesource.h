@@ -21,6 +21,7 @@ public:
                            QGraphicsItem* parent = nullptr);
     ~VoltageSource() override = default;
     QRectF boundingRect() const override;
+    QRectF getObstacleRect() const override;
     void paint(QPainter* painter,
                const QStyleOptionGraphicsItem*,
                QWidget*) override;

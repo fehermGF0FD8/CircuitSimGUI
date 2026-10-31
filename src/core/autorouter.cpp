@@ -1,5 +1,6 @@
 #include "autorouter.h"
 
+#include "builtincomponent.h"
 #include "node.h"
 #include "pin.h"
 #include "wire.h"
@@ -14,7 +15,7 @@ AutoRouter::AutoRouter(QGraphicsScene* sceneP, int gridSizeP):
     gridSize(gridSizeP)
 {}
 
-void AutoRouter::initRouting(const QPointF& startPos) {
+void AutoRouter::initRouting() {
     if (!scene) return;
 
     sceneBounds = scene->sceneRect();
@@ -22,7 +23,7 @@ void AutoRouter::initRouting(const QPointF& startPos) {
     gridWidth = std::ceil(sceneBounds.width() / gridSize);
     gridHeight = std::ceil(sceneBounds.height() / gridSize);
 
-    updateObstacleMap(startPos);
+    updateObstacleMap();
 }
 
 // Executes the A* algorithm
@@ -123,22 +124,8 @@ QList<QPointF> AutoRouter::findPath(const QPointF& startPos,
 }
 
 // Builds 2D obstacle grid from scene items
-void AutoRouter::updateObstacleMap(const QPointF& startPos) {
+void AutoRouter::updateObstacleMap() {
     obstacleMap.assign(gridWidth, QVector<bool>(gridHeight, false));
-
-    // Finding item which is the most relevant to startPos
-    QGraphicsItem* startComponent = nullptr;
-    QList<QGraphicsItem*> itemsAtStart = scene->items(startPos);
-
-    for (QGraphicsItem* itemAtStart : itemsAtStart) {
-        // Clicked item is a pin
-        if (itemAtStart->parentItem() != nullptr) {
-            startComponent = itemAtStart->parentItem();
-            break;
-        }
-        // Clicked item is a component/node
-        startComponent = itemAtStart;
-    }
 
     // Marking obstacles on the scene
     for (QGraphicsItem* item : scene->items()) {
@@ -147,16 +134,18 @@ void AutoRouter::updateObstacleMap(const QPointF& startPos) {
         if (item->parentItem() != nullptr) continue;
         if (dynamic_cast<Node*>(item) != nullptr) continue;
         if (dynamic_cast<Wire*>(item) != nullptr) continue;
-        if (item == startComponent) {
-            continue;
+
+        QRectF rect;
+        if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+            rect = comp->mapToScene(comp->getObstacleRect()).boundingRect();
+        } else {
+            rect = item->sceneBoundingRect();
         }
 
-        QRectF rect = item->sceneBoundingRect();
-
-        int minX = std::max(0, mapToGrid(rect.topLeft()).x() - 1);
-        int minY = std::max(0, mapToGrid(rect.topLeft()).y() - 1);
-        int maxX = std::min(gridWidth - 1, mapToGrid(rect.bottomRight()).x() + 1);
-        int maxY = std::min(gridHeight - 1, mapToGrid(rect.bottomRight()).y() + 1);
+        int minX = std::max(0, mapToGrid(rect.topLeft()).x());
+        int minY = std::max(0, mapToGrid(rect.topLeft()).y());
+        int maxX = std::min(gridWidth - 1, mapToGrid(rect.bottomRight()).x());
+        int maxY = std::min(gridHeight - 1, mapToGrid(rect.bottomRight()).y());
 
         for (int x = minX; x <= maxX; ++x) {
             for (int y = minY; y <= maxY; ++y) {

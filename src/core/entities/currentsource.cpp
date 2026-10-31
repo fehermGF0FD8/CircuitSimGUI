@@ -16,6 +16,10 @@ QRectF CurrentSource::boundingRect() const {
     return ComponentPainter::CURRENTSOURCE_BOUND_RECT;
 }
 
+QRectF CurrentSource::getObstacleRect() const {
+    return QRectF(-18, -18, 36, 36);
+}
+
 void CurrentSource::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     ComponentPainter::drawCurrentSource(painter, isSelected(), id);
 }

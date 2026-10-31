@@ -210,7 +210,7 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
             }
 
             if (router) {
-                router->initRouting(tempWire->getStartPos());
+                router->initRouting();
             }
 
             isRouting = true;
@@ -303,6 +303,17 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
             return;
         }
     }
+    else if ((event->button() == Qt::LeftButton) && (currentMode != WireMode)) {
+        QGraphicsItem* clickedItem = itemAt(event->pos());
+        if (clickedItem && clickedItem->parentItem()) {
+            clickedItem = clickedItem->parentItem();
+        }
+        if (clickedItem && (dynamic_cast<BuiltInComponent*>(clickedItem) || dynamic_cast<Node*>(clickedItem))) {
+            isTransforming = true;
+            collectAndHideWires(clickedItem);
+        }
+        QGraphicsView::mousePressEvent(event);
+    }
     else {
         QGraphicsView::mousePressEvent(event);
     }
@@ -313,6 +324,10 @@ void CircuitView::mouseReleaseEvent(QMouseEvent* event) {
         setDragMode(QGraphicsView::NoDrag);
     }
     QGraphicsView::mouseReleaseEvent(event);
+    if (isTransforming) {
+        isTransforming = false;
+        rerouteAffectedWires();
+    }
 }
 
 void CircuitView::mouseMoveEvent(QMouseEvent* event) {
@@ -365,8 +380,12 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
     }
     if (event->key() == Qt::Key_R) {
         for (QGraphicsItem* item : this->scene()->selectedItems()) {
+            collectAndHideWires(item);
+        }
+        for (QGraphicsItem* item : this->scene()->selectedItems()) {
             item->setRotation(item->rotation() == 0 ? 90 : 0);
         }
+        rerouteAffectedWires();
     }
     else if (event->key() == Qt::Key_Delete) {
         const QList<QGraphicsItem*> itemsList = this->scene()->selectedItems();
@@ -685,3 +704,66 @@ void CircuitView::reassignIDs() {
         comp->update();
     }
 } */
+
+void CircuitView::collectAndHideWires(QGraphicsItem* item) {
+    if (!item) return;
+
+    affectedWires.clear();
+
+    for (QGraphicsItem* sceneItem : scene()->items()) {
+        if (Wire* wire = dynamic_cast<Wire*>(sceneItem)) {
+            bool isConnected = false;
+
+            if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+                for (Pin* pin : comp->getPins()) {
+                    if (wire->getStartPin() == pin || wire->getEndPin() == pin) {
+                        isConnected = true;
+                        break;
+                    }
+                }
+            }
+
+            else if (Node* node = dynamic_cast<Node*>(item)) {
+                if (wire->getStartNode() == node || wire->getEndNode() == node) {
+                    isConnected = true;
+                }
+            }
+
+            if (isConnected) {
+                wire->hide();
+                affectedWires.append(wire);
+            }
+        }
+    }
+}
+
+void CircuitView::rerouteAffectedWires() {
+    if (affectedWires.isEmpty() || !router) return;
+
+    // invokes updateObstacleMap()
+    router->initRouting();
+
+    for (Wire* wire : affectedWires) {
+        QPointF startPos = wire->getStartPin() ? wire->getStartPin()->scenePos() : wire->getStartNode()->scenePos();
+        Direction startPED = wire->getStartPin() ? router->getPinExitDirection(wire->getStartPin()) : Direction::None;
+
+        QPointF endPos = wire->getEndPin() ? wire->getEndPin()->scenePos() : wire->getEndNode()->scenePos();
+        Direction endPED = wire->getEndPin() ? router->getPinExitDirection(wire->getEndPin()) : Direction::None;
+
+        QList<QPointF> newPath = router->findPath(startPos, endPos, startPED, endPED);
+
+        if (!newPath.isEmpty()) {
+            wire->setPathPoints(newPath);
+        } else {
+            // !!!
+            wire->setPathPoints({});
+            wire->setStartPos(startPos);
+            wire->setEndPos(endPos);
+        }
+
+        wire->show();
+    }
+
+    affectedWires.clear();
+}
+

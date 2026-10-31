@@ -16,6 +16,10 @@ QRectF VoltageSource::boundingRect() const {
     return ComponentPainter::VOLTAGESOURCE_BOUND_RECT;
 }
 
+QRectF VoltageSource::getObstacleRect() const {
+    return QRectF(-18, -18, 36, 36);
+}
+
 void VoltageSource::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     ComponentPainter::drawVoltageSource(painter, isSelected(), id);
 }

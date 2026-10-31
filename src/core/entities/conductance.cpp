@@ -16,6 +16,10 @@ QRectF Conductance::boundingRect() const {
     return ComponentPainter::ZIGZAG_BOUND_RECT;
 }
 
+QRectF Conductance::getObstacleRect() const {
+    return QRectF(-25, -12, 50, 24);
+}
+
 void Conductance::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
     ComponentPainter::drawZigZagComponent(painter, isSelected(), id);
 }
