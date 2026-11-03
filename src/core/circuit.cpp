@@ -162,11 +162,7 @@ void Circuit::fromJson(const QJsonObject& json) {
     for (const QJsonValue& val : std::as_const(wiresArray)) {
         QJsonObject wireObj = val.toObject();
 
-        bool isHorizontalFirst = wireObj["isHorizontalFirst"].toBool();
-
         Wire* newWire = new Wire();
-
-        newWire->setIsHorizontalFirst(isHorizontalFirst);
 
         QJsonObject startObj = wireObj["start"].toObject();
         if (startObj["type"].toString() == "Node") {
@@ -199,6 +195,14 @@ void Circuit::fromJson(const QJsonObject& json) {
             newWire->setEndPos(endPin->scenePos());
             endPin->setWire(newWire);
         }
+
+        QList<QPointF> loadedPath;
+        QJsonArray pointsArray = wireObj["pathPoints"].toArray();
+        for (const QJsonValue& ptVal : std::as_const(pointsArray)) {
+            QJsonObject ptObj = ptVal.toObject();
+            loadedPath.append(QPointF(ptObj["x"].toDouble(), ptObj["y"].toDouble()));
+        }
+        newWire->setPathPoints(loadedPath);
 
         addWire(newWire);
     }

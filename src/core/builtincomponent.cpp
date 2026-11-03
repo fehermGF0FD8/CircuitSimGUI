@@ -51,13 +51,5 @@ QVariant BuiltInComponent::itemChange(GraphicsItemChange change, const QVariant 
     if (change == ItemPositionChange && scene()) {
         return Snapping::snapToGrid(value.toPointF());
     }
-    if (change == ItemPositionHasChanged || change == ItemRotationHasChanged) {
-        for (Pin* pin : std::as_const(pins)) {
-            Wire* connectedWire = pin->getWire();
-            if (connectedWire) {
-                connectedWire->updatePosition();
-            }
-        }
-    }
     return QGraphicsObject::itemChange(change, value);
 }

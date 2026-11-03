@@ -100,7 +100,6 @@ CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
         for (Wire* wire : circuitModel->getWires()) {
             if (wire) {
                 tempScene->addItem(wire);
-                wire->updatePosition();
             }
         }
     }
@@ -238,16 +237,8 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
                 scene()->removeItem(tempWire);
                 delete tempWire;
                 tempWire = nullptr;
+                isRouting = false;
                 return;
-            }
-
-            if (clickedNode) {
-                tempWire->setEndItem(clickedNode);
-                tempWire->setEndPos(clickedNode->scenePos());
-            }
-            else if (clickedPin) {
-                tempWire->setEndItem(clickedPin);
-                tempWire->setEndPos(clickedPin->scenePos());
             }
 
             if (router) {
@@ -267,10 +258,23 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
 
                 if (!finalPath.isEmpty()) {
                     tempWire->setPathPoints(finalPath);
-                } else {
-                    tempWire->setPathPoints({});
-                    tempWire->setEndPos(finalTargetPos);
                 }
+                else {
+                    scene()->removeItem(tempWire);
+                    delete tempWire;
+                    tempWire = nullptr;
+                    isRouting = false;
+                    return;
+                }
+            }
+
+            if (clickedNode) {
+                tempWire->setEndItem(clickedNode);
+                tempWire->setEndPos(clickedNode->scenePos());
+            }
+            else if (clickedPin) {
+                tempWire->setEndItem(clickedPin);
+                tempWire->setEndPos(clickedPin->scenePos());
             }
 
             if (clickedNode) {
@@ -357,7 +361,6 @@ void CircuitView::mouseMoveEvent(QMouseEvent* event) {
         }
         else {
             tempWire->setPathPoints({});
-            tempWire->setEndPos(snappedPos);
         }
         return;
     }
@@ -403,7 +406,8 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
                 for (Wire* connectedWire : node->getWires()) {
                     if (connectedWire->getStartNode() && connectedWire->getStartNode() != node) {
                         neighborsToUpdate.append(connectedWire->getStartNode());
-                    } else if (connectedWire->getEndNode() && connectedWire->getEndNode() != node) {
+                    }
+                    else if (connectedWire->getEndNode() && connectedWire->getEndNode() != node) {
                         neighborsToUpdate.append(connectedWire->getEndNode());
                     }
                     circuitModel->removeWire(connectedWire);
@@ -453,11 +457,6 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
                 scene()->removeItem(item);
                 delete item;
             }
-        }
-    }
-    else if (event->key() == Qt::Key_T) {
-        if (currentMode == WireMode && tempWire != nullptr) {
-            tempWire->toggleRoutingMode();
         }
     }
     else {
@@ -754,16 +753,23 @@ void CircuitView::rerouteAffectedWires() {
 
         if (!newPath.isEmpty()) {
             wire->setPathPoints(newPath);
-        } else {
-            // !!!
-            wire->setPathPoints({});
-            wire->setStartPos(startPos);
-            wire->setEndPos(endPos);
+            wire->show();
         }
+        else {
+            Node* startNode = wire->getStartNode();
+            Node* endNode = wire->getEndNode();
 
-        wire->show();
+            scene()->removeItem(wire);
+            // circuitModel->removeWire(wire);
+            delete wire;
+
+            if (startNode) {
+                NetworkTopology::updateNetworkNames(startNode);
+            }
+            if (endNode) {
+                NetworkTopology::updateNetworkNames(endNode);
+            }
+        }
     }
-
     affectedWires.clear();
 }
-

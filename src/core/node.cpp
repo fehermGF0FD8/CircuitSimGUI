@@ -58,12 +58,6 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value) {
     if (change == ItemPositionChange && scene()) {
         return Snapping::snapToGrid(value.toPointF());
     }
-    if (change == ItemPositionHasChanged) {
-        // A std::as_const megakadályozza a felesleges memóriamásolást!
-        for (Wire* wire : std::as_const(connectedWires)) {
-            wire->updatePosition();
-        }
-    }
     return QGraphicsObject::itemChange(change, value);
 }
 

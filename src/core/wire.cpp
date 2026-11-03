@@ -9,6 +9,7 @@
 #include <QGraphicsItem>
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsSceneMouseEvent>
+#include <QJsonArray>
 #include <QPainter>
 #include <QPainterPath>
 #include <QStyleOptionGraphicsItem>
@@ -74,18 +75,6 @@ QPainterPath Wire::getPath() const {
         for (int i = 1; i < pathPoints.size(); ++i) {
             path.lineTo(pathPoints[i]);
         }
-        return path;
-    }
-
-    path.moveTo(getStartPos());
-
-    if (isHorizontalFirst) {
-        path.lineTo(getEndPos().x(), getStartPos().y());
-        path.lineTo(getEndPos());
-    }
-    else {
-        path.lineTo(getStartPos().x(), getEndPos().y());
-        path.lineTo(getEndPos());
     }
 
     return path;
@@ -139,30 +128,6 @@ void Wire::setEndItem(Pin* endPinParam) {
     endNode = nullptr;
 }
 
-void Wire::toggleRoutingMode() {
-    isHorizontalFirst = !isHorizontalFirst;
-    update();
-}
-
-void Wire::updatePosition() {
-    if (startNode) {
-        setStartPos(startNode->scenePos());
-    } else if (startPin) {
-        setStartPos(startPin->scenePos());
-    }
-
-    if (endNode) {
-        setEndPos(endNode->scenePos());
-    } else if (endPin) {
-        setEndPos(endPin->scenePos());
-    }
-
-    pathPoints.clear();
-
-    prepareGeometryChange();
-    update();
-}
-
 // !!!
 QJsonObject Wire::toJson() const {
     QJsonObject jsonWire;
@@ -191,7 +156,14 @@ QJsonObject Wire::toJson() const {
     }
     jsonWire["end"] = jsonEnd;
 
-    jsonWire["isHorizontalFirst"] = isHorizontalFirst;
+    QJsonArray pointsArray;
+    for (const QPointF& pt : pathPoints) {
+        QJsonObject pointObj;
+        pointObj["x"] = pt.x();
+        pointObj["y"] = pt.y();
+        pointsArray.append(pointObj);
+    }
+    jsonWire["pathPoints"] = pointsArray;
 
     return jsonWire;
 }

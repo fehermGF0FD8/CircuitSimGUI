@@ -49,17 +49,6 @@ public:
     Pin* getEndPin() const {return endPin;}
 
     // !!!
-    void setIsHorizontalFirst(bool isHorizontalFirstParam) {
-        isHorizontalFirst = isHorizontalFirstParam;
-    }
-    bool getIsHorizontalFirst() const {
-        return isHorizontalFirst;
-    }
-
-    void toggleRoutingMode();
-    void updatePosition();
-
-    // !!!
     QJsonObject toJson() const;
 
 private:
@@ -73,7 +62,6 @@ private:
     Pin* endPin = nullptr;
 
     bool isHovered;
-    bool isHorizontalFirst = true;
 
     QColor getBaseColor() const;
     QPainterPath getPath() const;
