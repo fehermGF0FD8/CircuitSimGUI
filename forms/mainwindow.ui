@@ -251,6 +251,26 @@
          <string>B-type Node</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>X-type Node</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Y-type Node</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>A-type Node</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>O-type Node</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

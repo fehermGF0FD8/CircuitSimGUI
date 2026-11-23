@@ -8,4 +8,6 @@
 #include "voltagesource.h"
 //...
 
+#include "subcircuitcomponent.h"
+
 #endif // ENTITIES_H

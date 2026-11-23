@@ -37,6 +37,8 @@ public:
 
     void addComponentAt(ComponentType type, const QPointF& position);
     void addNodeAt(NodeType type, const QPointF& position);
+    void addSubcircuitAt(Circuit* subcircuit, const QPointF& position);
+    void setAvailableSubcircuits(const QList<Circuit*>& subcircuits) {availableSubcircuits = subcircuits;}
 
 /*
 public slots:
@@ -76,9 +78,14 @@ private:
     void collectAndHideWires(QGraphicsItem* item);
     void rerouteAffectedWires();
 
+    QList<Circuit*> availableSubcircuits;
+    void removeAndDelWire(Wire* wire);
+
 private slots:
     void addComponent();
     void addNode();
+    void addSubcircuit();
+    void rCircuitChanged();
     // only available via context menu currently
     void reassignIDs();
 

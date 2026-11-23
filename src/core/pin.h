@@ -5,7 +5,7 @@
 
 #include <QRectF>
 
-class BuiltInComponent;
+class Component;
 class Node;
 class QGraphicsSceneHoverEvent;
 class QGraphicsSceneMouseEvent;
@@ -20,7 +20,7 @@ class Pin: public QGraphicsObject
 
 public:
     explicit Pin(QPointF relativePosParam,
-                 BuiltInComponent* parentCompParam);
+                 Component* parentCompParam);
     virtual ~Pin();
 
     QRectF boundingRect() const override;
@@ -29,7 +29,7 @@ public:
                QWidget*) override;
 
     // !!!
-    BuiltInComponent* getParentComponent() const {
+    Component* getParentComponent() const {
         return parentComp;
     }
 
@@ -46,7 +46,7 @@ public:
 
 
 private:
-    BuiltInComponent* parentComp;
+    Component* parentComp;
     Wire* connectedWire = nullptr;
     bool isHovered;
 

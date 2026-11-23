@@ -9,9 +9,9 @@ class IDmanager
 public:
     explicit IDmanager() = default;
     QString getNextID(const QString& prefix);
+    // registering already existing ids after loading a circuit in order to avoid name collision
+    void registerID (const QString& idP);
     void resetPrefix(const QString& prefix);
-    void resetAllComponents();
-    void resetAllInternalNodes();
 
 private:
     QMap<QString, int> idCounters;

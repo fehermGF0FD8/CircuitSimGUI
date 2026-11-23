@@ -13,6 +13,7 @@ INCLUDEPATH += src/gui src/core src/core/entities src/core/graphics
 SOURCES += \
     src/core/autorouter.cpp \
     src/core/circuit.cpp \
+    src/core/component.cpp \
     src/core/graphics/componentpainter.cpp \
     src/core/entities/conductance.cpp \
     src/core/entities/currentsource.cpp \
@@ -23,8 +24,8 @@ SOURCES += \
     src/core/node.cpp \
     src/core/pin.cpp \
     src/core/projectmanager.cpp \
+    src/core/subcircuitcomponent.cpp \
     src/core/wire.cpp \
-    src/gui/addcircuitdialog.cpp \
     src/core/builtincomponent.cpp \
     src/gui/circuitview.cpp \
     main.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
 HEADERS += \
     src/core/autorouter.h \
     src/core/circuit.h \
+    src/core/component.h \
     src/core/entities/entities.h \
     src/core/graphics/componentpainter.h \
     src/core/componenttype.h \
@@ -48,15 +50,14 @@ HEADERS += \
     src/core/pin.h \
     src/core/projectmanager.h \
     src/core/snapping.h \
+    src/core/subcircuitcomponent.h \
     src/core/wire.h \
-    src/gui/addcircuitdialog.h \
     src/core/builtincomponent.h \
     src/gui/circuitview.h \
     src/gui/mainwindow.h \
     src/core/entities/resistor.h
 
 FORMS += \
-    forms/addcircuitdialog.ui \
     forms/mainwindow.ui
 
 # Default rules for deployment.

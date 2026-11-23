@@ -6,8 +6,10 @@ enum class ComponentType {
     Conductance,
     Capacitor,
     CurrentSource,
-    VoltageSource
+    VoltageSource,
     //...
+
+    Subcircuit
 };
 
 #endif // COMPONENTTYPE_H

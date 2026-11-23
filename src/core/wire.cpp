@@ -1,9 +1,8 @@
 #include "wire.h"
 
-#include "builtincomponent.h"
+#include "component.h"
 #include "componentpainter.h"
 #include "node.h"
-#include "nodetype.h"
 #include "pin.h"
 
 #include <QGraphicsItem>
@@ -56,14 +55,8 @@ QPainterPath Wire::shape() const {
 }
 
 QColor Wire::getBaseColor() const {
-    if ((startNode && startNode->getType() == NodeType::N) ||
-        (endNode && endNode->getType() == NodeType::N)) {
-        return Qt::red;
-    }
-    else if ((startNode && startNode->getType() == NodeType::B) ||
-             (endNode && endNode->getType() == NodeType::B)) {
-        return Qt::blue;
-    }
+    if (startNode) return ComponentPainter::getNodeColor(startNode->getType());
+    if (endNode) return ComponentPainter::getNodeColor(endNode->getType());
     return Qt::black;
 }
 

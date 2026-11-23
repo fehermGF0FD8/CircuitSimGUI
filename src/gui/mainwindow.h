@@ -13,6 +13,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+class Circuit;
 class QCloseEvent;
 class QListWidgetItem;
 class QPointF;
@@ -33,6 +34,9 @@ private:
 
     // Initializes all signal-slot connections for the UI elements
     void setupConnections();
+
+    QList<Circuit*> getAllOpenCircuits() const;
+    void clearWorkspace();
 
 private slots:
     // Sets up the UI for a new project workspace
@@ -55,5 +59,7 @@ private slots:
     void syncUiState();
     // Adds the selected component to the active scene upon double-clicking
     void compLibItemDoubleClicked(QListWidgetItem* item);
+
+    void refreshSubcircuitLists();
 };
 #endif // MAINWINDOW_H

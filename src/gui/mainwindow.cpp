@@ -1,21 +1,24 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "addcircuitdialog.h"
 #include "circuit.h"
 #include "circuitview.h"
 #include "projectmanager.h"
 #include "snapping.h"
+#include "subcircuitcomponent.h"
 
 #include <QActionGroup>
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QMessageBox>
 #include <QPointF>
+#include <QSet>
 #include <QStatusBar>
 #include <QString>
 #include <QWidget>
@@ -97,6 +100,30 @@ void MainWindow::setupConnections() {
     connect(ui->wireMode, &QAction::toggled, this, &MainWindow::syncUiState);
 }
 
+QList<Circuit*> MainWindow::getAllOpenCircuits() const {
+    QList<Circuit*> circuits;
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        if (auto* view = qobject_cast<CircuitView*>(ui->tabWidget->widget(i))) {
+            if (view->getCircuitModel()) {
+                circuits.append(view->getCircuitModel());
+            }
+        }
+    }
+    return circuits;
+}
+
+void MainWindow::clearWorkspace() {
+    for (Circuit* c : getAllOpenCircuits()) {
+        c->disconnect();
+    }
+    while (ui->tabWidget->count() > 0) {
+        QWidget* w = ui->tabWidget->widget(0);
+        ui->tabWidget->removeTab(0);
+        delete w;
+    }
+    syncUiState();
+}
+
 /*
  * TODO:
  * createNewProject currently just opens the workspace with a blank tab;
@@ -109,17 +136,7 @@ void MainWindow::createNewProject() {
     syncUiState();
 
     if (ui->tabWidget->count() == 0) {
-        AddCircuitDialog dialog(this);
-        if (dialog.exec() == QDialog::Accepted) {
-            CircuitData data = dialog.getResult();
-            if (data.circuitName.isEmpty()) {
-                data.circuitName = "Unnamed Circuit";
-            }
-
-            Circuit* circuit = new Circuit(data.circuitName);
-            CircuitView* circuitView = new CircuitView(circuit, ui->tabWidget);
-            setupNewTab(circuitView, data.circuitName);
-        }
+        MainWindow::addCircuit();
     }
 }
 
@@ -129,21 +146,14 @@ void MainWindow::createNewProject() {
  * the user must manually save all related circuits into the same directory
  */
 void MainWindow::saveProject() {
-    CircuitView* currentView = dynamic_cast<CircuitView*>(ui->tabWidget->currentWidget());
-    if (!currentView) return;
+    const QList<Circuit*> circuits = getAllOpenCircuits();
+    if (circuits.isEmpty()) return;
 
-    Circuit* currentCircuit = currentView->getCircuitModel();
-
-    QString defaultName = currentCircuit->getName() + ".json";
-
-    QString savePath = QFileDialog::getSaveFileName(this,
-                                                    "Save Project",
-                                                    defaultName,
-                                                    "JSON files (*.json)");
-
+    QString savePath = QFileDialog::getSaveFileName(
+        this, tr("Save Project"), "project.json", tr("JSON files (*.json)"));
     if (savePath.isEmpty()) return;
 
-    ProjectManager::saveProject(currentCircuit, savePath);
+    ProjectManager::saveProject(circuits, savePath);
 }
 
 void MainWindow::setupNewTab(CircuitView* view, const QString& tabName) {
@@ -155,6 +165,9 @@ void MainWindow::setupNewTab(CircuitView* view, const QString& tabName) {
     syncUiState();
 
     connect(view, &CircuitView::mouseMoved, this, &MainWindow::updateCursorInfo);
+    connect(view->getCircuitModel(), &Circuit::extNodesChanged,
+            this, &MainWindow::refreshSubcircuitLists);
+    refreshSubcircuitLists();
 }
 
 /*
@@ -164,33 +177,61 @@ void MainWindow::setupNewTab(CircuitView* view, const QString& tabName) {
  * cross-directory files can be opened side-by-side
  */
 void MainWindow::loadProject() {
-    QString loadPath = QFileDialog::getOpenFileName(this,
-                                                    "Load Project",
-                                                    "",
-                                                    "JSON files (*.json)");
+    QString loadPath = QFileDialog::getOpenFileName(
+        this, tr("Load Project"), "", tr("JSON files (*.json)"));
     if (loadPath.isEmpty()) return;
 
-    Circuit* loadedCircuit = ProjectManager::loadProject(loadPath);
+    const QList<Circuit*> loadedCircuits = ProjectManager::loadProject(loadPath);
+    if (loadedCircuits.isEmpty()) return;
 
-    if (loadedCircuit) {
-        ui->stackedWidget->setCurrentIndex(1);
-        CircuitView* circuitView = new CircuitView(loadedCircuit, ui->tabWidget);
-        setupNewTab(circuitView, loadedCircuit->getName());
+    clearWorkspace();
+    ui->stackedWidget->setCurrentIndex(1);
+
+    for (Circuit* c : loadedCircuits) {
+        CircuitView* circuitView = new CircuitView(c, ui->tabWidget);
+        setupNewTab(circuitView, c->getName());
     }
+    refreshSubcircuitLists();
 }
 
 void MainWindow::addCircuit() {
-    AddCircuitDialog dialog(this);
-    if (dialog.exec() == QDialog::Accepted) {
-        CircuitData data = dialog.getResult();
-        if (data.circuitName.isEmpty()) {
-            data.circuitName = "Unnamed Circuit";
-        }
+    bool ok = false;
+    QString circuitName = QInputDialog::getText(
+        this, tr("New Circuit/Subcircuit"), tr("Circuit/Subcircuit Name:"), QLineEdit::Normal, QString(), &ok);
 
-        Circuit* circuit = new Circuit(data.circuitName);
-        CircuitView* circuitView = new CircuitView(circuit, ui->tabWidget);
-        setupNewTab(circuitView, data.circuitName);
+    if (!ok) return;
+
+    circuitName = circuitName.trimmed();
+    const QList<Circuit*> existing = getAllOpenCircuits();
+
+    if (circuitName.isEmpty()) {
+        int idx = 1;
+        do {
+            circuitName = QString("Unnamed_%1").arg(idx++);
+        } while (std::any_of(existing.begin(), existing.end(),
+                             [&](Circuit* c) { return c->getName() == circuitName; }));
     }
+    else {
+        static const QSet<QString> reservedPrefixes = {
+            "R", "G", "C", "I", "V", "N", "B", "X", "Y", "A", "O"
+        };
+        if (reservedPrefixes.contains(circuitName.toUpper())) {
+            QMessageBox::warning(this, tr("Reserved Name"),
+                                 tr("'%1' is a reserved component/node prefix. Choose another name.").arg(circuitName));
+            return;
+        }
+        for (Circuit* c : existing) {
+            if (c->getName() == circuitName) {
+                QMessageBox::warning(this, tr("Duplicate Name"),
+                                     tr("A circuit named '%1' already exists in the project.").arg(circuitName));
+                return;
+            }
+        }
+    }
+
+    Circuit* circuit = new Circuit(circuitName);
+    CircuitView* circuitView = new CircuitView(circuit, ui->tabWidget);
+    setupNewTab(circuitView, circuitName);
 }
 
 /*
@@ -211,6 +252,18 @@ void MainWindow::quitApp() {
  * in case of being modified, show a warning dialog before allowing the tab to close
  */
 void MainWindow::closeTab(int index) {
+    if (auto* viewToClose = qobject_cast<CircuitView*>(ui->tabWidget->widget(index))) {
+        Circuit* target = viewToClose->getCircuitModel();
+        for (Circuit* other : getAllOpenCircuits()) {
+            if (other != target && other->dependsOn(target)) {
+                QMessageBox::warning(this, tr("Subcircuit in Use"),
+                                     tr("Cannot close '%1' because it is instantiated inside '%2'.\n"
+                                        "Delete its instances first!").arg(target->getName(), other->getName()));
+                return;
+            }
+        }
+    }
+
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Close Tab",
                                   "Are you sure you want to close this circuit?\nIf you haven't saved, all changes will be lost!",
@@ -279,6 +332,7 @@ void MainWindow::syncUiState() {
             }
         }
     }
+    refreshSubcircuitLists();
 }
 
 void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
@@ -289,27 +343,86 @@ void MainWindow::compLibItemDoubleClicked(QListWidgetItem* item) {
     QPoint centerOfView = currentCircuitView->viewport()->rect().center();
     QPointF scenePos = currentCircuitView->mapToScene(centerOfView);
 
+    QVariant userData = item->data(Qt::UserRole);
+    if (Circuit* subCircuit = userData.value<Circuit*>()) {
+        currentCircuitView->addSubcircuitAt(subCircuit, scenePos);
+        return;
+    }
+
     QString text = item->text();
 
-    if (text == "N-type Node") {
-        currentCircuitView->addNodeAt(NodeType::N, scenePos);
-        return;
-    }
-    else if (text == "B-type Node") {
-        currentCircuitView->addNodeAt(NodeType::B, scenePos);
-        return;
-    }
-    else if (text == "--- Nodes ---") {
+    NodeType nType;
+    bool isNode = true;
+    if (text == "N-type Node") nType = NodeType::N;
+    else if (text == "B-type Node") nType = NodeType::B;
+    else if (text == "X-type Node") nType = NodeType::X;
+    else if (text == "Y-type Node") nType = NodeType::Y;
+    else if (text == "A-type Node") nType = NodeType::A;
+    else if (text == "O-type Node") nType = NodeType::O;
+    else isNode = false;
+
+    if (isNode) {
+        currentCircuitView->addNodeAt(nType, scenePos);
         return;
     }
 
-    ComponentType type;
-    if (item->text() == "Resistor") type = ComponentType::Resistor;
-    else if (item->text() == "Conductance") type = ComponentType::Conductance;
-    else if (item->text() == "Capacitor") type = ComponentType::Capacitor;
-    else if (item->text() == "Current Source") type = ComponentType::CurrentSource;
-    else if (item->text() == "Voltage Source") type = ComponentType::VoltageSource;
+    ComponentType cType;
+    if (text == "Resistor") cType = ComponentType::Resistor;
+    else if (text == "Conductance") cType = ComponentType::Conductance;
+    else if (text == "Capacitor") cType = ComponentType::Capacitor;
+    else if (text == "Current Source") cType = ComponentType::CurrentSource;
+    else if (text == "Voltage Source") cType = ComponentType::VoltageSource;
     //...
     else return;
-    currentCircuitView->addComponentAt(type, scenePos);
+    currentCircuitView->addComponentAt(cType, scenePos);
+}
+
+void MainWindow::refreshSubcircuitLists() {
+    const QList<Circuit*> allCircuits = getAllOpenCircuits();
+
+    // contextMenu
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        auto* view = qobject_cast<CircuitView*>(ui->tabWidget->widget(i));
+        if (!view || !view->getCircuitModel()) continue;
+
+        Circuit* targetCircuit = view->getCircuitModel();
+        QList<Circuit*> validSubs;
+        for (Circuit* candidate : allCircuits) {
+            if (candidate && candidate->isSubcircuit() && !candidate->dependsOn(targetCircuit)) {
+                validSubs.append(candidate);
+            }
+        }
+        view->setAvailableSubcircuits(validSubs);
+    }
+
+    // listWidget
+    for (int i = ui->listWidget->count() - 1; i >= 0; --i) {
+        if (ui->listWidget->item(i)->data(Qt::UserRole).isValid()) {
+            delete ui->listWidget->takeItem(i);
+        }
+    }
+
+    auto* activeView = qobject_cast<CircuitView*>(ui->tabWidget->currentWidget());
+    if (!activeView || !activeView->getCircuitModel()) return;
+
+    Circuit* activeCircuit = activeView->getCircuitModel();
+    QList<Circuit*> activeValidSubs;
+    for (Circuit* candidate : allCircuits) {
+        if (candidate && candidate->isSubcircuit() && !candidate->dependsOn(activeCircuit)) {
+            activeValidSubs.append(candidate);
+        }
+    }
+
+    if (!activeValidSubs.isEmpty()) {
+        auto* headerItem = new QListWidgetItem("   --- Subcircuit ---");
+        headerItem->setData(Qt::UserRole, "header");
+        headerItem->setFlags(Qt::ItemIsEnabled);
+        ui->listWidget->addItem(headerItem);
+
+        for (Circuit* sub : activeValidSubs) {
+            auto* subItem = new QListWidgetItem(sub->getName());
+            subItem->setData(Qt::UserRole, QVariant::fromValue(sub));
+            ui->listWidget->addItem(subItem);
+        }
+    }
 }

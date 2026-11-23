@@ -40,18 +40,11 @@ QList<T*> filterByPrefix(const QList<T*>& allItems, const QString& prefix) {
 
 template <typename T>
 bool compareByID(T* a, T* b) {
-    QStringList partsA = a->getID().split("_");
-    QStringList partsB = b->getID().split("_");
+    int sepA = a->getID().lastIndexOf('_');
+    int sepB = b->getID().lastIndexOf('_');
 
-    int numA = 0;
-    int numB = 0;
-
-    if (partsA.size() > 1) {
-        numA = partsA[1].toInt();
-    }
-    if (partsB.size() > 1) {
-        numB = partsB[1].toInt();
-    }
+    int numA = (sepA != -1) ? a->getID().mid(sepA + 1).toInt() : 0;
+    int numB = (sepB != -1) ? b->getID().mid(sepB + 1).toInt() : 0;
 
     return numA < numB;
 }
@@ -68,7 +61,6 @@ void reassignListIDs(QList<T*>& items, const QString& prefix, IDmanager& idManag
     }
 }
 
-// !!!
 CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
     QGraphicsView(parent),
     circuitModel(circuit)
@@ -85,9 +77,17 @@ CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
 
     if (circuitModel) {
 
-        for (BuiltInComponent* comp : circuitModel->getComponents()) {
+        for (Component* comp : circuitModel->getComponents()) {
             if (comp) {
                 tempScene->addItem(comp);
+
+                if (auto* subComp = dynamic_cast<SubcircuitComponent*>(comp)) {
+                    if (Circuit* ref = subComp->getReferencedCircuit()) {
+                        connect(ref, &Circuit::extNodesChanged,
+                                this, &CircuitView::rCircuitChanged,
+                                Qt::UniqueConnection);
+                    }
+                }
             }
         }
 
@@ -105,7 +105,6 @@ CircuitView::CircuitView(Circuit* circuit, QWidget* parent):
     }
 }
 
-// !!!
 CircuitView::~CircuitView() {
     delete circuitModel;
 }
@@ -160,7 +159,6 @@ void CircuitView::drawBackground(QPainter* painter, const QRectF& rect) {
     painter->drawPoints(points.data(), points.size());
 }
 
-// !!!
 void CircuitView::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::MiddleButton) {
         setDragMode(QGraphicsView::ScrollHandDrag);
@@ -312,7 +310,7 @@ void CircuitView::mousePressEvent(QMouseEvent* event) {
         if (clickedItem && clickedItem->parentItem()) {
             clickedItem = clickedItem->parentItem();
         }
-        if (clickedItem && (dynamic_cast<BuiltInComponent*>(clickedItem) || dynamic_cast<Node*>(clickedItem))) {
+        if (clickedItem && (dynamic_cast<Component*>(clickedItem) || dynamic_cast<Node*>(clickedItem))) {
             isTransforming = true;
             collectAndHideWires(clickedItem);
         }
@@ -375,7 +373,6 @@ void CircuitView::mouseDoubleClickEvent(QMouseEvent *event) {
     QGraphicsView::mouseDoubleClickEvent(event);
 }
 
-// !!!
 void CircuitView::keyPressEvent(QKeyEvent* event) {
     if(!scene()) {
         QGraphicsView::keyPressEvent(event);
@@ -396,7 +393,7 @@ void CircuitView::keyPressEvent(QKeyEvent* event) {
             Pin* pin = dynamic_cast<Pin*>(item);
             Node* node = dynamic_cast<Node*>(item);
             Wire* wire = dynamic_cast<Wire*>(item);
-            BuiltInComponent* component = dynamic_cast<BuiltInComponent*>(item);
+            Component* component = dynamic_cast<Component*>(item);
 
             if (pin) {
                 continue;
@@ -474,8 +471,21 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
 
     QMenu contextMenu(this);
     QMenu* addMenu = contextMenu.addMenu("Add");
+    QMenu* subcircuitMenu = addMenu->addMenu("Subcircuit");
     QMenu* builtInComponentMenu = addMenu->addMenu("Built-in Component");
     QMenu* nodeMenu = addMenu->addMenu("Node");
+
+    if (availableSubcircuits.isEmpty()) {
+        subcircuitMenu->setEnabled(false);
+    }
+    else {
+        for (Circuit* sub : std::as_const(availableSubcircuits)) {
+            if (!sub) continue;
+            QAction* actionAddSub = subcircuitMenu->addAction(sub->getName());
+            actionAddSub->setData(QVariant::fromValue(sub));
+            connect(actionAddSub, &QAction::triggered, this, &CircuitView::addSubcircuit);
+        }
+    }
 
     QAction* actionAddResistor = builtInComponentMenu->addAction("Resistor");
     actionAddResistor->setData(static_cast<int>(ComponentType::Resistor));
@@ -493,7 +503,15 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     actionAddNTypeNode->setData(static_cast<int>(NodeType::N));
     QAction* actionAddBTypeNode = nodeMenu->addAction("B-type Node");
     actionAddBTypeNode->setData(static_cast<int>(NodeType::B));
-    //...
+    QAction* actionAddXTypeNode = nodeMenu->addAction("X-type Node");
+    actionAddXTypeNode->setData(static_cast<int>(NodeType::X));
+    QAction* actionAddYTypeNode = nodeMenu->addAction("Y-type Node");
+    actionAddYTypeNode->setData(static_cast<int>(NodeType::Y));
+    QAction* actionAddATypeNode = nodeMenu->addAction("A-type Node");
+    actionAddATypeNode->setData(static_cast<int>(NodeType::A));
+    QAction* actionAddOTypeNode = nodeMenu->addAction("O-type Node");
+    actionAddOTypeNode->setData(static_cast<int>(NodeType::O));
+
 
     connect(actionAddResistor, &QAction::triggered, this, &CircuitView::addComponent);
     connect(actionAddConductance, &QAction::triggered, this, &CircuitView::addComponent);
@@ -504,7 +522,10 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
 
     connect(actionAddNTypeNode, &QAction::triggered, this, &CircuitView::addNode);
     connect(actionAddBTypeNode, &QAction::triggered, this, &CircuitView::addNode);
-    //...
+    connect(actionAddXTypeNode, &QAction::triggered, this, &CircuitView::addNode);
+    connect(actionAddYTypeNode, &QAction::triggered, this, &CircuitView::addNode);
+    connect(actionAddATypeNode, &QAction::triggered, this, &CircuitView::addNode);
+    connect(actionAddOTypeNode, &QAction::triggered, this, &CircuitView::addNode);
 
     contextMenu.addSeparator();
 
@@ -513,6 +534,17 @@ void CircuitView::contextMenuEvent(QContextMenuEvent* event) {
     connect(actionReassignIDs, &QAction::triggered, this, &CircuitView::reassignIDs);
 
     contextMenu.exec(event->globalPos());
+}
+
+void CircuitView::addSubcircuit() {
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action) return;
+
+    Circuit* subcircuit = action->data().value<Circuit*>();
+    if (!subcircuit) return;
+
+    QPointF scenePos = mapToScene(contextMenuPosition);
+    addSubcircuitAt(subcircuit, scenePos);
 }
 
 void CircuitView::addComponent() {
@@ -535,7 +567,22 @@ void CircuitView::addNode() {
     addNodeAt(type, scenePos);
 }
 
-// !!!
+void CircuitView::addSubcircuitAt(Circuit* subcircuit, const QPointF& position) {
+    if (!scene() || !circuitModel || !subcircuit) return;
+    if (!subcircuit->isSubcircuit() || subcircuit->dependsOn(circuitModel)) return;
+
+    QString newID = circuitModel->getIdManager().getNextID(subcircuit->getName());
+    auto* subComp = new SubcircuitComponent(newID, subcircuit);
+
+    scene()->addItem(subComp);
+    circuitModel->addComponent(subComp);
+    subComp->setPos(Snapping::snapToGrid(position));
+
+    connect(subcircuit, &Circuit::extNodesChanged,
+            this, &CircuitView::rCircuitChanged,
+            Qt::UniqueConnection);
+}
+
 void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     if (!scene()) return;
 
@@ -580,7 +627,6 @@ void CircuitView::addComponentAt(ComponentType type, const QPointF& position) {
     }
 }
 
-// !!!
 void CircuitView::addNodeAt(NodeType type, const QPointF& position) {
     if (!scene()) return;
 
@@ -594,7 +640,18 @@ void CircuitView::addNodeAt(NodeType type, const QPointF& position) {
     case NodeType::B:
         prefix = "B";
         break;
-    //...
+    case NodeType::X:
+        prefix = "X";
+        break;
+    case NodeType::Y:
+        prefix = "Y";
+        break;
+    case NodeType::A:
+        prefix = "A";
+        break;
+    case NodeType::O:
+        prefix = "O";
+        break;
     default: break;
     }
 
@@ -608,20 +665,22 @@ void CircuitView::addNodeAt(NodeType type, const QPointF& position) {
     newNode->setPos(position);
 }
 
-// !!!
 void CircuitView::reassignIDs() {
     if (!scene()) return;
 
     QList<BuiltInComponent*> allComps;
+    QList<Node*> allNodes;
+    QMap<QString, QList<SubcircuitComponent*>> subGroups;
     for (QGraphicsItem* item : scene()->items()) {
-        if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+        if (auto* comp = dynamic_cast<BuiltInComponent*>(item)) {
             allComps.append(comp);
         }
-    }
-
-    QList<Node*> allNodes;
-    for (QGraphicsItem* item : scene()->items()) {
-        if (Node* node = dynamic_cast<Node*>(item)) {
+        else if (auto* subComp = dynamic_cast<SubcircuitComponent*>(item)) {
+            if (Circuit* ref = subComp->getReferencedCircuit()) {
+                subGroups[ref->getName()].append(subComp);
+            }
+        }
+        else if (auto* node = dynamic_cast<Node*>(item)) {
             allNodes.append(node);
         }
     }
@@ -634,6 +693,11 @@ void CircuitView::reassignIDs() {
 
     QList<Node*> nNodes = filterByPrefix(allNodes, "N");
     QList<Node*> bNodes = filterByPrefix(allNodes, "B");
+    QList<Node*> xNodes = filterByPrefix(allNodes, "X");
+    QList<Node*> yNodes = filterByPrefix(allNodes, "Y");
+    QList<Node*> aNodes = filterByPrefix(allNodes, "A");
+    QList<Node*> oNodes = filterByPrefix(allNodes, "O");
+
 
     // !!!
     reassignListIDs(resistors, "R", circuitModel->getIdManager());
@@ -642,8 +706,16 @@ void CircuitView::reassignIDs() {
     reassignListIDs(currentSources, "I", circuitModel->getIdManager());
     reassignListIDs(voltageSources, "V", circuitModel->getIdManager());
 
+    for (auto [subName, subList] : subGroups.asKeyValueRange()) {
+        reassignListIDs(subList, subName, circuitModel->getIdManager());
+    }
+
     reassignListIDs(nNodes, "N", circuitModel->getIdManager());
     reassignListIDs(bNodes, "B", circuitModel->getIdManager());
+    reassignListIDs(xNodes, "X", circuitModel->getIdManager());
+    reassignListIDs(yNodes, "Y", circuitModel->getIdManager());
+    reassignListIDs(aNodes, "A", circuitModel->getIdManager());
+    reassignListIDs(oNodes, "O", circuitModel->getIdManager());
 
     for (Node* node: std::as_const(allNodes)) {
         if (node) {
@@ -651,58 +723,10 @@ void CircuitView::reassignIDs() {
         }
     }
 
+    circuitModel->notifyExtNodesChanged();
+
     scene()->update();
 }
-
-/* void CircuitView::reassignCompIDs() {
-    // Safety check
-    if (!scene()) return;
-
-    // Reset the internal counters
-    idManager.resetAllComponents();
-
-    // List all built-in components currently on the scene
-    QList<BuiltInComponent*> componentsToRename;
-    for (QGraphicsItem* item : scene()->items()) {
-        if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
-            componentsToRename.append(comp);
-        }
-    }
-
-    // Sort the listed components in ascending order
-    std::sort(componentsToRename.begin(), componentsToRename.end(), compareComponents);
-
-    // Iterate through the sorted list and assign new IDs
-    for (BuiltInComponent* comp : componentsToRename) {
-        QString prefix;
-
-        switch (comp->getType()) {
-        case ComponentType::Resistor:
-            prefix = "R";
-            break;
-        case ComponentType::Conductance:
-            prefix = "G";
-            break;
-        case ComponentType::Capacitor:
-            prefix = "C";
-            break;
-        case ComponentType::CurrentSource:
-            prefix = "I";
-            break;
-        case ComponentType::VoltageSource:
-            prefix = "V";
-            break;
-        default:
-            break;
-        }
-
-        QString newID = idManager.getNextID(prefix);
-        comp->setID(newID);
-
-        // repaint the component with its new text
-        comp->update();
-    }
-} */
 
 void CircuitView::collectAndHideWires(QGraphicsItem* item) {
     if (!item) return;
@@ -713,7 +737,7 @@ void CircuitView::collectAndHideWires(QGraphicsItem* item) {
         if (Wire* wire = dynamic_cast<Wire*>(sceneItem)) {
             bool isConnected = false;
 
-            if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+            if (Component* comp = dynamic_cast<Component*>(item)) {
                 for (Pin* pin : comp->getPins()) {
                     if (wire->getStartPin() == pin || wire->getEndPin() == pin) {
                         isConnected = true;
@@ -772,4 +796,69 @@ void CircuitView::rerouteAffectedWires() {
         }
     }
     affectedWires.clear();
+}
+
+void CircuitView::removeAndDelWire(Wire* wire) {
+    if (!wire) return;
+    Node* startNode = wire->getStartNode();
+    Node* endNode = wire->getEndNode();
+
+    if (scene()) scene()->removeItem(wire);
+    if (circuitModel) circuitModel->removeWire(wire);
+    delete wire;
+
+    if (startNode) NetworkTopology::updateNetworkNames(startNode);
+    if (endNode) NetworkTopology::updateNetworkNames(endNode);
+}
+
+void CircuitView::rCircuitChanged() {
+    if (!scene() || !circuitModel) return;
+
+    Circuit* modifiedCircuit = qobject_cast<Circuit*>(sender());
+    if (!modifiedCircuit) return;
+
+    QList<SubcircuitComponent*> instances;
+    for (Component* comp : circuitModel->getComponents()) {
+        if (auto* subComp = dynamic_cast<SubcircuitComponent*>(comp)) {
+            if (subComp->getReferencedCircuit() == modifiedCircuit) {
+                instances.append(subComp);
+            }
+        }
+    }
+    if (instances.isEmpty()) return;
+
+    // all external nodes are removed => not a subc anymore
+    if (!modifiedCircuit->isSubcircuit()) {
+        for (SubcircuitComponent* subComp : instances) {
+            for (Pin* pin : subComp->getPins()) {
+                if (Wire* pinWire = pin->getWire()) {
+                    removeAndDelWire(pinWire);
+                    pin->setWire(nullptr);
+                }
+            }
+            scene()->removeItem(subComp);
+            circuitModel->removeComponent(subComp);
+            delete subComp;
+        }
+        scene()->update();
+        return;
+    }
+
+    // remaining pins != 0 -> deleting wires connected to deadpins, updating box and routing
+    for (SubcircuitComponent* subComp : instances) {
+        const QList<Pin*> obsoletePins = subComp->getObsoletePins();
+        for (Pin* deadPin : obsoletePins) {
+            if (Wire* pinWire = deadPin->getWire()) {
+                removeAndDelWire(pinWire);
+                deadPin->setWire(nullptr);
+            }
+        }
+
+        affectedWires.clear();
+        collectAndHideWires(subComp);
+        subComp->updatePinsAndGeometry();
+        rerouteAffectedWires();
+    }
+
+    scene()->update();
 }

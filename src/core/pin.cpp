@@ -1,6 +1,6 @@
 #include "pin.h"
 
-#include "builtincomponent.h"
+#include "component.h"
 
 #include "componentpainter.h"
 #include "node.h"
@@ -13,7 +13,7 @@
 #include <QWidget>
 
 Pin::Pin(QPointF relativePosParam,
-         BuiltInComponent* parentCompParam):
+         Component* parentCompParam):
     QGraphicsObject(parentCompParam),
     parentComp(parentCompParam),
     isHovered(false)

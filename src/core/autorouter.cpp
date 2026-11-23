@@ -1,6 +1,6 @@
 #include "autorouter.h"
 
-#include "builtincomponent.h"
+#include "component.h"
 #include "node.h"
 #include "pin.h"
 #include "wire.h"
@@ -136,9 +136,10 @@ void AutoRouter::updateObstacleMap() {
         if (dynamic_cast<Wire*>(item) != nullptr) continue;
 
         QRectF rect;
-        if (BuiltInComponent* comp = dynamic_cast<BuiltInComponent*>(item)) {
+        if (Component* comp = dynamic_cast<Component*>(item)) {
             rect = comp->mapToScene(comp->getObstacleRect()).boundingRect();
-        } else {
+        }
+        else {
             rect = item->sceneBoundingRect();
         }
 

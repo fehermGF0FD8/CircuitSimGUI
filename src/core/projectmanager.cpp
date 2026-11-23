@@ -2,57 +2,77 @@
 
 #include "circuit.h"
 
-#include <QByteArray>
-#include <QDebug>
 #include <QFile>
-#include <QIODevice>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMap>
+#include <QDebug>
 
-bool ProjectManager::saveProject(const Circuit* circuit, const QString& filePath) {
-    if (!circuit) {
-        qWarning() << "Cannot save a null pointer!";
-        return false;
+bool ProjectManager::saveProject(const QList<Circuit*>& circuits, const QString& filePath) {
+    QJsonArray circuitsArray;
+    for (const Circuit* circuit : circuits) {
+        if (circuit) {
+            circuitsArray.append(circuit->toJson());
+        }
     }
 
-    QJsonObject jsonCircuit = circuit->toJson();
-
-    QJsonDocument doc(jsonCircuit);
+    QJsonObject rootObj;
+    rootObj["circuits"] = circuitsArray;
 
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning() << "Failed to open file for writing:" << filePath;
         return false;
     }
-    file.write(doc.toJson(QJsonDocument::Indented));
+    file.write(QJsonDocument(rootObj).toJson(QJsonDocument::Indented));
     file.close();
 
     qDebug() << "Successfully saved to:" << filePath;
     return true;
 }
 
-Circuit* ProjectManager::loadProject(const QString& filePath) {
-    QFile file(filePath);
+QList<Circuit*> ProjectManager::loadProject(const QString& filePath) {
+    QList<Circuit*> loadedCircuits;
 
+    QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Failed to open file for reading:" << filePath;
-        return nullptr;
+        return loadedCircuits;
     }
 
-    QByteArray fileData = file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
     file.close();
 
-    QJsonDocument doc = QJsonDocument::fromJson(fileData);
+    QJsonObject rootObj = doc.object();
 
-    QJsonObject jsonCircuit = doc.object();
+    if (!rootObj.contains("circuits") || !rootObj["circuits"].isArray()) {
+        qWarning() << "Invalid project file format:" << filePath;
+        return loadedCircuits;
+    }
 
-    QString circuitName = jsonCircuit["circuitName"].toString();
+    QJsonArray circuitsArray = rootObj["circuits"].toArray();
 
-    Circuit* loadedCircuit = new Circuit(circuitName);
+    // loading circuits and nodes
+    QMap<QString, Circuit*> circuitReg;
+    QList<QJsonObject> circuitJsons;
 
-    loadedCircuit->fromJson(jsonCircuit);
+    for (const QJsonValue& val : std::as_const(circuitsArray)) {
+        QJsonObject cObj = val.toObject();
+        QString name = cObj["circuitName"].toString();
+        Circuit* c = new Circuit(name);
+        c->loadNodesFromJson(cObj);
+
+        loadedCircuits.append(c);
+        circuitReg.insert(name, c);
+        circuitJsons.append(cObj);
+    }
+
+    // loading components and wires
+    for (int i = 0; i < loadedCircuits.size(); ++i) {
+        loadedCircuits[i]->loadCompsAndWiresFromJson(circuitJsons[i], circuitReg);
+    }
 
     qDebug() << "Successfully loaded project from:" << filePath;
-
-    return loadedCircuit;
+    return loadedCircuits;
 }
